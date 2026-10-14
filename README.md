@@ -1,4 +1,4 @@
-# mcu-crypto-eval
+# flashwhisperer-crypto-eval
 
 *🤖WARNING🤖: This file LLM generated and may read oddly. Will eventually be human-edited for that real-life touch and typos.*
 
