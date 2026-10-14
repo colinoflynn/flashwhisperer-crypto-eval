@@ -53,22 +53,40 @@ the first trace count at which the exact master key falls out.
 
 | | |
 |---|---|
-| parts | STM32L152RE (Cortex-M3, no cache) — measured end to end |
+| parts | STM32L152RE (M3, no cache) measured across the matrix; STM32F429ZI (M4F, ART) ported and measuring |
 | libraries | the in-tree reference cipher, Mbed-TLS 3.6.7, wolfSSL 5.9.4 |
-| instruments | on-chip (the victim's own counter) — working |
+| instruments | on-chip (the victim's own counter). **The off-chip instrument is not moved over yet.** |
 
-First hardware result, NUCLEO-L152RE, reference byte-S-box cipher, tables
-in flash at `0x08001400`, 32 MHz, one wait state:
+Ten configurations captured on the L152 at 20 000 traces each, every
+ciphertext checked — [the full table and what it says](results/stm32l152re/README.md).
+The headline rows:
 
-| | cycles sd | distinct values | exact master key |
+| | table | cycles sd | exact key |
 |---|---|---|---|
-| tables in flash | 2.1991 | 17 | **5 000 traces** |
-| tables in RAM (the twin) | 0.0000 | 1 | never — there is nothing to recover from |
+| reference cipher, byte S-box, tables in flash | `0x08001400` | 2.1991 | **5 000 traces** |
+| reference cipher, four T-tables | `0x08001400` | 0.6717 | **2 500 traces** |
+| reference cipher, **tables in RAM** (the twin) | `0x20001000` | 0.0000 | — nothing to recover from |
+| **stock** Mbed-TLS | none in flash | 0.0000 | — no channel, and that is its own default |
+| Mbed-TLS with `ROM_TABLES` | `0x08001400` | 0.7828 | not at 20 000 |
+| wolfSSL, stock | `0x08000400` | 0.5841 | not at 20 000 |
 
-Those numbers reproduce the single-part rig this generalises, which
-measured a spread of 2.2033 and the exact key at 5 000 traces on the same
-configuration, and the table addresses are identical in both arms. That
-match is the check that the restructure changed nothing that matters.
+Two things worth taking from that. **Stock Mbed-TLS is bit-exactly
+constant** — its tables are generated into RAM at run time, so it reports
+address 0 for all three slots; that is a negative control that came with
+the library. And **no key was recovered from either third-party library**
+despite spreads comparable to the reference cipher's: wolfSSL with
+`SMALL_TABLES` has sd 2.1918 against the reference's 2.1991 and yields
+nothing where the reference yields the key at 5 000. A statistic is not a
+channel.
+
+**Parity.** Every table address, the spread, and the recovery trace count
+match the single-part rig this generalises — and so do the nulls: that rig
+recovered nothing from either library at 50 000 traces. The restructure
+changed nothing that matters.
+
+The F429 port measures correctly and its accelerator axis works (sd 3.88
+at zero wait states, 31.59 at five, twin 0.0224) but **has not recovered a
+key**; [what is and is not established there](results/stm32f429zi/README.md).
 
 ## Layout
 

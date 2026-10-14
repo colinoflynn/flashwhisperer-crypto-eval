@@ -1,0 +1,106 @@
+[
+  {
+    "variant": "mbedtls-rom0-few0-ram0-vcp-b115200-tsystick-w1-pad0",
+    "lib": "mbedtls",
+    "cfg": "stock",
+    "table": 0,
+    "line_off": 0,
+    "tables_in_ram": false,
+    "sd": 0.0,
+    "exact_at": null,
+    "note": "constant"
+  },
+  {
+    "variant": "mbedtls-rom1-few0-ram0-vcp-b115200-tsystick-w1-pad0",
+    "lib": "mbedtls",
+    "cfg": "romtab",
+    "table": 134222848,
+    "line_off": 0,
+    "tables_in_ram": false,
+    "sd": 0.782791050083868,
+    "exact_at": null
+  },
+  {
+    "variant": "mbedtls-rom1-few0-ram1-vcp-b115200-tsystick-w1-pad0",
+    "lib": "mbedtls",
+    "cfg": "ramtab+romtab",
+    "table": 536875008,
+    "line_off": 0,
+    "tables_in_ram": true,
+    "sd": 0.0,
+    "exact_at": null,
+    "note": "constant"
+  },
+  {
+    "variant": "mbedtls-rom1-few1-ram0-vcp-b115200-tsystick-w1-pad0",
+    "lib": "mbedtls",
+    "cfg": "romtab+fewer",
+    "table": 134219776,
+    "line_off": 0,
+    "tables_in_ram": false,
+    "sd": 1.7666262644990651,
+    "exact_at": null
+  },
+  {
+    "variant": "refsbox-sbox-ram0-vcp-b115200-tsystick-w1-pad0",
+    "lib": "refsbox",
+    "cfg": "stock",
+    "table": 134222848,
+    "line_off": 0,
+    "tables_in_ram": false,
+    "sd": 2.199144267499398,
+    "exact_at": 5000
+  },
+  {
+    "variant": "refsbox-sbox-ram1-vcp-b115200-tsystick-w1-pad0",
+    "lib": "refsbox",
+    "cfg": "ramtab",
+    "table": 536875008,
+    "line_off": 0,
+    "tables_in_ram": true,
+    "sd": 0.0,
+    "exact_at": null,
+    "note": "constant"
+  },
+  {
+    "variant": "refsbox-ttable-ram0-vcp-b115200-tsystick-w1-pad0",
+    "lib": "refsbox",
+    "cfg": "stock",
+    "table": 134222848,
+    "line_off": 0,
+    "tables_in_ram": false,
+    "sd": 0.6716840741559783,
+    "exact_at": 2500
+  },
+  {
+    "variant": "wolfssl-few0-ram0-vcp-b115200-tsystick-w1-pad0",
+    "lib": "wolfssl",
+    "cfg": "stock",
+    "table": 134218752,
+    "line_off": 0,
+    "tables_in_ram": false,
+    "sd": 0.5840736208730283,
+    "exact_at": null
+  },
+  {
+    "variant": "wolfssl-few0-ram1-vcp-b115200-tsystick-w1-pad0",
+    "lib": "wolfssl",
+    "cfg": "ramtab",
+    "table": 536870912,
+    "line_off": 0,
+    "tables_in_ram": true,
+    "sd": 0.0,
+    "exact_at": null,
+    "note": "constant"
+  },
+  {
+    "variant": "wolfssl-few1-ram0-vcp-b115200-tsystick-w1-pad0",
+    "lib": "wolfssl",
+    "cfg": "fewer",
+    "table": 134218752,
+    "line_off": 0,
+    "tables_in_ram": false,
+    "sd": 2.191833845043966,
+    "exact_at": null
+  }
+]

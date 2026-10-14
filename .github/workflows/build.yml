@@ -1,0 +1,92 @@
+# Two jobs: the host tests, and a real cross-compile of every configuration
+# for every part.
+#
+# WHAT A GREEN RUN HERE DOES NOT CHECK, which matters more than that it is
+# green:
+#
+#   * NOTHING IS MEASURED. There is no board in CI, so no capture runs, no
+#     ciphertext is checked against a reference AES, and no recovery is
+#     attempted. Every claim in this repository about whether something
+#     leaks rests on a bench run, not on this.
+#   * The linker's OUTPUT is only checked for the table symbols existing
+#     and moving between the flash and RAM variants. That catches a
+#     sections script that stopped collecting, which is the failure mode
+#     that would otherwise show up as "this library has no tables" -- but
+#     it does not check that the tables are the right tables.
+#   * The toolchain here is not the one on the bench. A codegen difference
+#     between versions changes the instruction stream, and the instruction
+#     stream is part of what is being measured, so a CI build is a
+#     syntax-and-layout check rather than a reproduction.
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false        # the host tests need none of them
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pytest numpy
+      - name: the header and its Python mirror must agree
+        run: python -m pytest instrumentation/host/tests -q
+
+  firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false        # libs/fetch.sh does it, shallow and at the pin
+      - name: toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-arm-none-eabi
+          arm-none-eabi-gcc --version | head -1
+      - name: fetch the pinned libraries
+        run: ./libs/fetch.sh
+      - name: nothing upstream is modified, every pin matches
+        run: ./tools/verify.sh
+      - name: build every configuration, for every part
+        run: |
+          set -e
+          for mcu in $(ls mcufw); do
+            echo "::group::$mcu"
+            make matrix MCU=$mcu
+            echo "::endgroup::"
+          done
+      - name: the table slots must exist, and must MOVE for the RAM variant
+        run: |
+          set -e
+          fail=0
+          for mcu in $(ls mcufw); do
+            flash=$(find build/$mcu -name fw.elf -path '*refsbox*ram0*' | head -1)
+            ram=$(find build/$mcu -name fw.elf -path '*refsbox*ram1*' | head -1)
+            if [ -z "$flash" ] || [ -z "$ram" ]; then
+              echo "$mcu: no refsbox flash/RAM pair was built"; fail=1; continue
+            fi
+            fa=$(arm-none-eabi-nm "$flash" | awk '/ _tabS$/{print $1}')
+            ra=$(arm-none-eabi-nm "$ram"   | awk '/ _tabS$/{print $1}')
+            echo "$mcu: S-box flash=0x$fa ram=0x$ra"
+            if [ -z "$fa" ] || [ -z "$ra" ]; then
+              echo "  FAIL: the sections script collected no S-box at all."
+              echo "        That is what a stale tab_s.ld looks like, and at"
+              echo "        run time it reports address 0 -- which reads as"
+              echo "        'this library keeps its tables in RAM'."
+              fail=1
+            elif [ "$fa" = "$ra" ]; then
+              echo "  FAIL: the RAM variant did not move the table. The"
+              echo "        residence control is the one that separates a"
+              echo "        flash channel from an instrument artefact; if it"
+              echo "        does not move, both arms measure the same thing."
+              fail=1
+            fi
+          done
+          exit $fail
