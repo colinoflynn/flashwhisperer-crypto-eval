@@ -117,7 +117,7 @@ one partition and tests a collision that doesn't exist. Getting it wrong
 returns a clean null, not a degraded answer.
 
 Record it in the part's dossier when you measure it, and pass it to
-`tools/attack.py --line-shift`. Measuring it is a separate exercise: the
+`tools/attack.py --line-shifts`. Measuring it is a separate exercise: the
 spacing at which a computed-call table's timing split disappears is the
 flash word width, read straight off the part.
 

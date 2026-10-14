@@ -18,8 +18,194 @@ make matrix MCU=stm32l152re          # every configuration worth having
 
 python tools/capture.py --mcu stm32l152re --probe <probe-serial> \
        --variant refsbox-sbox-ram0-vcp-b115200-tsystick-w1-pad0 -n 20000
-python tools/attack.py results/stm32l152re/*.npz --line-shift 3
+python tools/attack.py results/stm32l152re/*.npz --line-shifts 3,1
 ```
+
+## Without a board
+
+A good half of this you can run with nothing attached, because the thing
+that decides whether there's a channel at all is settled at link time.
+You need `arm-none-eabi-gcc` and the pinned checkouts, nothing else.
+
+```bash
+./libs/fetch.sh
+make list
+```
+```
+parts:
+  stm32f429zi    Cortex-M4F, 16 MHz, 4-bit LATENCY + ART I/D caches, DWT or SysTick
+  stm32l152re    Cortex-M3, 32 MHz, one-bit LATENCY, no cache - the floor case
+libraries:
+  mbedtls        Mbed-TLS 3.6.7, axes ROMTAB and FEWER (both default off)
+  refsbox        this project's own byte S-box AES - the control, source in-tree
+  wolfssl        wolfSSL 5.9.4, axis FEWER; tables are in flash in EVERY build
+```
+
+### Watch the control work
+
+Three builds of the same library. Every build prints where its tables
+landed, which is the whole residence argument in one place:
+
+```bash
+./tools/build.sh MCU=stm32l152re LIB=mbedtls ROMTAB=1 RAMTAB=0   # flash arm
+./tools/build.sh MCU=stm32l152re LIB=mbedtls ROMTAB=1 RAMTAB=1   # the RAM twin
+./tools/build.sh MCU=stm32l152re LIB=mbedtls ROMTAB=0            # stock
+```
+
+The flash arm, tables in `.rodata`:
+
+```
+    08000400 R _tabT
+    08001400 R _tabS
+    08001500 R _tabD
+```
+
+The twin, same code and same indices, tables moved by the linker alone:
+
+```
+    20000000 R _tabT
+    20001000 R _tabS
+    20001100 R _tabD
+```
+
+And stock Mbed-TLS, which has no tables in flash to begin with and says so
+rather than leaving you to notice:
+
+```
+    08000400 B _tabS_end
+    08000400 B _tabT
+    08000400 B _tabT_end
+  NOTE: MBEDTLS_AES_ROM_TABLES is OFF - this is STOCK Mbed-TLS.
+        Its tables are generated into .bss at run time, so they are
+        in RAM and this build is EXPECTED to be quiet. The table
+        slots will report address 0. Build ROMTAB=1 for the
+        flash-table configuration.
+```
+
+Zero-length slots, so the device will report address 0 for all three. That
+is a result and not a missing value - it's the negative control that came
+with the library, with the positive control one flag away.
+
+### The two checks worth running before you believe anything
+
+`check_tables_move.sh` is the cheapest proof that the three linker
+fragments are still wired together. A `tab_*.ld` that quietly stopped
+matching collects nothing, the slot reports 0, and 0 is a legitimate
+answer meaning "this library keeps its tables in RAM" - so a stale
+fragment reads as a library with no flash channel:
+
+```bash
+make matrix MCU=stm32l152re        # or just the refsbox ram0/ram1 pair
+./tools/check_tables_move.sh
+```
+```
+stm32f429zi: S-box flash=0x08001400 ram=0x20001000
+stm32l152re: S-box flash=0x08001400 ram=0x20001000
+OK: every part's table slot exists and moves.
+```
+
+`verify.sh` is the other one: no library source is modified and every
+checkout is still on its pin. The claim that nothing upstream was touched
+is what makes a result hard to argue with, so it's checked rather than
+asserted:
+
+```bash
+./tools/verify.sh
+```
+```
+== library checkouts must be pristine at their pinned commits ==
+  mbedtls    068ff080b  0 modified/untracked
+  wolfssl    3c5eead44  0 modified/untracked
+
+  OK: no library source is modified, and every pin matches.
+```
+
+## With a board
+
+One configuration at a time, which is the form to use while bringing a
+part up:
+
+```bash
+python tools/capture.py --mcu stm32l152re --probe 066DFF565271525067103647 \
+       --variant refsbox-sbox-ram0-vcp-b115200-tsystick-w1-pad0 -n 20000
+```
+
+Realistically you want the whole matrix, each one built, flashed, read
+back off the device and verified before anything is written, and you want
+a particular accelerator word rather than whatever the board booted with:
+
+```bash
+# every configuration for a part, one flash each
+python tools/sweep.py --mcu stm32l152re --probe <serial> -n 20000
+
+# one library's arms only, while you are iterating on it
+python tools/sweep.py --mcu stm32l152re --probe <serial> -n 20000 --only wolfssl
+
+# a named accelerator word; the device's READBACK goes in the filename, and
+# capture.py aborts if the board refused the setting
+python tools/capture.py --mcu stm32f429zi --probe <serial> --acr 0x705 \
+       --variant refsbox-sbox-ram0-vcp-b115200-tdwt-w1-pad0 -n 25000
+```
+
+The `w1` there is the warm-up, not a wait state. Every axis that changes
+the image is in the variant name, because two builds differing only in a
+define are not interchangeable and an object file reused across them is a
+silent wrong answer rather than a build error.
+
+`tools/longcap.sh` is the same thing for the long runs: it takes the five
+L152 library arms to 100 000 (`N=` overrides) and leaves the controls at
+20 000, since a bit-exactly constant build buys nothing from more data. It
+hardcodes this bench's probe serial and the part, so read it as a record
+of what was run rather than something to point at your own board.
+
+Then score it. The quick form sweeps both row widths and both pair models
+and tells you which won:
+
+```bash
+python tools/attack.py results/stm32l152re/*.npz --line-shifts 3,1
+```
+
+Here is a real run of exactly that over the ten L152 configurations,
+trimmed to the summary:
+
+```
+== summary (line_shifts=3,1, models=120,24) ==
+   variant                                  cfg                 sd      n   ls result
+   mbedtls-rom0-few0-ram0-vcp-b115200-tsyst stock           0.0000      -    - constant -- control
+   mbedtls-rom1-few0-ram0-vcp-b115200-tsyst romtab          0.7828   2500    3 EXACT at n=2500 ls=3, 120-pair
+   mbedtls-rom1-few0-ram1-vcp-b115200-tsyst ramtab+romtab   0.0000      -    - constant -- control
+   mbedtls-rom1-few1-ram0-vcp-b115200-tsyst romtab+fewer    1.7666   5000    3 EXACT at n=5000 ls=3, 120-pair
+   refsbox-sbox-ram0-vcp-b115200-tsystick-w stock           2.1991   5000    3 EXACT at n=5000 ls=3, 24-pair
+   refsbox-sbox-ram1-vcp-b115200-tsystick-w ramtab          0.0000      -    - constant -- control
+   refsbox-ttable-ram0-vcp-b115200-tsystick stock           0.6717   2500    3 EXACT at n=2500 ls=3, 120-pair
+   wolfssl-few0-ram0-vcp-b115200-tsystick-w stock           0.5841   2500    1 6/16 (best, n=2500 ls=1 120-pair)
+   wolfssl-few0-ram1-vcp-b115200-tsystick-w ramtab          0.0000      -    - constant -- control
+   wolfssl-few1-ram0-vcp-b115200-tsystick-w fewer           2.1918  10000    3 EXACT at n=10000 ls=3, 120-pair
+
+   controls clean: 4 bit-exactly constant or RAM-twin builds scored nothing under the identical call.
+```
+
+The last line is the one that makes the rest of the table quotable. A
+120-pair vote has five times the freedom of a 24-pair one and a geometry
+sweep multiplies that again, so every constant build and every RAM twin is
+scored through the identical call. If one of them had scored, no row above
+it could be quoted - the run would be manufacturing, and the finding would
+be about the attack rather than about the library.
+
+The realistic form pins what you already know and ladders what you don't.
+`--line-offs auto` takes the offset from the address the *device* reported,
+which beats a guess of zero on a table that didn't land row-aligned:
+
+```bash
+python tools/attack.py results/stm32f429zi/*.npz \
+       --line-shifts 4,2 --line-offs auto \
+       --ladder 25000,50000,100000,250000 --models all,intra-column \
+       --threads 4 --out results/stm32f429zi/recoveries.json
+```
+
+The logs and the `recoveries.json` from both parts are committed under
+`results/<part>/`, so the numbers above are checkable without a board even
+though the captures themselves are not tracked.
 
 ## What it measures
 

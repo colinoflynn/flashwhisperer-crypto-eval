@@ -73,6 +73,15 @@ while read -r name url pin version; do
         git -C "$dir" remote add origin "$url"
     fi
     git -C "$dir" config core.longpaths true
+    # Upstream's bytes, exactly: no CRLF translation on the way in. A
+    # Windows global core.autocrlf=true lands every text file CRLF, the
+    # index still holds LF, and verify.sh then reports all 297 of
+    # Mbed-TLS's tracked files as modified - which is the one claim this
+    # repository rests on, failing for a reason that has nothing to do
+    # with anybody editing anything. The firmware is built under WSL, so
+    # the two sides of that disagreement are both live on one bench.
+    git -C "$dir" config core.autocrlf false
+    git -C "$dir" config core.eol lf
 
     read -r -a sparse <<< "$(sparse_for "$name")"
     if [ ${#sparse[@]} -gt 0 ]; then

@@ -17,7 +17,7 @@
 # not discoverable from it - a per-part property that has to be measured
 # once and then written down.
 #
-# It is what tools/attack.py needs for --line-shift, and getting it wrong
+# It is what tools/attack.py needs for --line-shifts, and getting it wrong
 # does not degrade gracefully: scoring an 8-byte row at the default of 4
 # merges two real rows into one partition, tests a collision that does not
 # exist, and returns a clean null that reads exactly like a part that does
