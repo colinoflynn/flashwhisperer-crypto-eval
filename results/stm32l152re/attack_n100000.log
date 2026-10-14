@@ -8,3 +8,47 @@
    mbedtls 3.6.7 [romtab+fewer]  table 0x08000800  n=100000  sd 1.7742  distinct 15
      n=2500    ls=3 off=0  120  9/16  bf=[]          -  (36s)
      n=2500    ls=3 off=0  24   4/16  adj=ct         -  (10s)
+     n=5000    ls=3 off=0  120 16/16  bf=[]          EXACT MASTER KEY  (25s)
+     n=5000    ls=3 off=0  24   8/16  adj=ct         -  (11s)
+
+== refsbox-sbox-ram0-vcp-b115200-tsystick-w1-pad0-n100000.npz
+   refsbox 0.0.0 [stock]  table 0x08001400  n=100000  sd 2.1879  distinct 18
+     n=2500    ls=3 off=0  120  5/16  bf=[]          -  (37s)
+     n=2500    ls=3 off=0  24   7/16  adj=state      -  (10s)
+     n=5000    ls=3 off=0  120 14/16  bf=[]          -  (36s)
+     n=5000    ls=3 off=0  24  16/16  adj=state      EXACT MASTER KEY  (10s)
+
+== wolfssl-few0-ram0-vcp-b115200-tsystick-w1-pad0-n100000.npz
+   wolfssl 5.9.4 [stock]  table 0x08000400  n=100000  sd 0.5869  distinct 8
+     n=2500    ls=3 off=0  120  0/16  bf=[]          -  (36s)
+     n=2500    ls=3 off=0  24   0/16  adj=None       -  (10s)
+     n=5000    ls=3 off=0  120  3/16  bf=[]          -  (36s)
+     n=5000    ls=3 off=0  24   0/16  adj=None       -  (10s)
+     n=10000   ls=3 off=0  120  6/16  bf=[]          -  (36s)
+     n=10000   ls=3 off=0  24   0/16  adj=None       -  (10s)
+     n=20000   ls=3 off=0  120  6/16  bf=[]          -  (36s)
+     n=20000   ls=3 off=0  24   0/16  adj=None       -  (10s)
+     n=50000   ls=3 off=0  120  6/16  bf=[]          -  (36s)
+     n=50000   ls=3 off=0  24   0/16  adj=None       -  (10s)
+     n=100000  ls=3 off=0  120  6/16  bf=[]          -  (37s)
+     n=100000  ls=3 off=0  24   1/16  adj=state      -  (10s)
+
+== wolfssl-few1-ram0-vcp-b115200-tsystick-w1-pad0-n100000.npz
+   wolfssl 5.9.4 [fewer]  table 0x08000400  n=100000  sd 2.1921  distinct 17
+     n=2500    ls=3 off=0  120  3/16  bf=[]          -  (36s)
+     n=2500    ls=3 off=0  24   0/16  adj=None       -  (10s)
+     n=5000    ls=3 off=0  120 15/16  bf=[]          -  (36s)
+     n=5000    ls=3 off=0  24   8/16  adj=state      -  (10s)
+     n=10000   ls=3 off=0  120 15/16  bf=[14]        EXACT MASTER KEY  (26s)
+     n=10000   ls=3 off=0  24   8/16  adj=state      -  (10s)
+
+== summary (line_shifts=3, models=120,24) ==
+   variant                                  cfg                 sd      n   ls result
+   mbedtls-rom1-few0-ram0-vcp-b115200-tsyst romtab          0.7863   2500    3 EXACT at n=2500 ls=3, 120-pair
+   mbedtls-rom1-few1-ram0-vcp-b115200-tsyst romtab+fewer    1.7742   5000    3 EXACT at n=5000 ls=3, 120-pair
+   refsbox-sbox-ram0-vcp-b115200-tsystick-w stock           2.1879   5000    3 EXACT at n=5000 ls=3, 24-pair
+   wolfssl-few0-ram0-vcp-b115200-tsystick-w stock           0.5869  10000    3 6/16 (best, n=10000 ls=3 120-pair)
+   wolfssl-few1-ram0-vcp-b115200-tsystick-w fewer           2.1921  10000    3 EXACT at n=10000 ls=3, 120-pair
+
+   controls clean: 0 bit-exactly constant or RAM-twin builds scored nothing under the identical call.
+   wrote results/stm32l152re/recoveries_n100000.json
