@@ -1,0 +1,22 @@
+
+== refsbox-sbox-ram0-vcp-b115200-tdwt-w1-pad0-n250000.npz
+   refsbox 0.0.0 [stock]  table 0x08001400  n=250000  sd 3.8568  distinct 35
+     n=25000   ls=4 off=0  120  2/16  bf=[]          -  (35s)
+     n=25000   ls=4 off=0  24   2/16  adj=state      -  (10s)
+     n=25000   ls=2 off=0  120  0/16  bf=[]          -  (35s)
+     n=25000   ls=2 off=0  24   0/16  adj=None       -  (10s)
+     n=50000   ls=4 off=0  120 10/16  bf=[]          -  (36s)
+     n=50000   ls=4 off=0  24   6/16  adj=ct         -  (10s)
+     n=50000   ls=2 off=0  120  0/16  bf=[]          -  (36s)
+     n=50000   ls=2 off=0  24   0/16  adj=None       -  (10s)
+     n=100000  ls=4 off=0  120 16/16  bf=[]          EXACT MASTER KEY  (25s)
+     n=100000  ls=4 off=0  24  14/16  adj=state      -  (10s)
+     n=100000  ls=2 off=0  120  1/16  bf=[]          -  (36s)
+     n=100000  ls=2 off=0  24   0/16  adj=None       -  (10s)
+
+== summary (line_shifts=4,2, models=120,24) ==
+   variant                                  cfg                 sd      n   ls result
+   refsbox-sbox-ram0-vcp-b115200-tdwt-w1-pa stock           3.8568 100000    4 EXACT at n=100000 ls=4, 120-pair
+
+   controls clean: 0 bit-exactly constant or RAM-twin builds scored nothing under the identical call.
+   wrote results/stm32f429zi/recoveries.json

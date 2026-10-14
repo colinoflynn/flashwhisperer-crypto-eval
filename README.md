@@ -57,36 +57,52 @@ the first trace count at which the exact master key falls out.
 | libraries | the in-tree reference cipher, Mbed-TLS 3.6.7, wolfSSL 5.9.4 |
 | instruments | on-chip (the victim's own counter). **The off-chip instrument is not moved over yet.** |
 
-Ten configurations captured on the L152 at 20 000 traces each, every
-ciphertext checked — [the full table and what it says](results/stm32l152re/README.md).
-The headline rows:
+Ten configurations on the L152, every ciphertext checked —
+[the full table](results/stm32l152re/README.md). "Exact key" is the AES-128
+master key, from inverting the recovered round-10 key:
 
-| | table | cycles sd | exact key |
+| | table | cycles sd | exact key at |
 |---|---|---|---|
-| reference cipher, byte S-box, tables in flash | `0x08001400` | 2.1991 | **5 000 traces** |
-| reference cipher, four T-tables | `0x08001400` | 0.6717 | **2 500 traces** |
-| reference cipher, **tables in RAM** (the twin) | `0x20001000` | 0.0000 | — nothing to recover from |
-| **stock** Mbed-TLS | none in flash | 0.0000 | — no channel, and that is its own default |
-| Mbed-TLS with `ROM_TABLES` | `0x08001400` | 0.7828 | not at 20 000 |
-| wolfSSL, stock | `0x08000400` | 0.5841 | not at 20 000 |
+| Mbed-TLS `ROM_TABLES` | `0x08001400` | 0.7828 | **2 500 traces** |
+| reference cipher, four T-tables | `0x08001400` | 0.6717 | **2 500** |
+| reference cipher, byte S-box | `0x08001400` | 2.1991 | **5 000** |
+| Mbed-TLS `ROM_TABLES` + `FEWER` | `0x08000800` | 1.7666 | **5 000** |
+| wolfSSL `SMALL_TABLES` | `0x08000400` | 2.1918 | **10 000** |
+| wolfSSL, stock | `0x08000400` | 0.5841 | **never — 6/16 flat to 100 000** |
+| **stock** Mbed-TLS | none in flash | 0.0000 | — no channel at all |
+| every RAM twin | RAM | 0.0000 | — control, all clean |
 
-Two things worth taking from that. **Stock Mbed-TLS is bit-exactly
-constant** — its tables are generated into RAM at run time, so it reports
-address 0 for all three slots; that is a negative control that came with
-the library. And **no key was recovered from either third-party library**
-despite spreads comparable to the reference cipher's: wolfSSL with
-`SMALL_TABLES` has sd 2.1918 against the reference's 2.1991 and yields
-nothing where the reference yields the key at 5 000. A statistic is not a
-channel.
+And on the F429, the reference cipher gives the **exact key at 100 000
+traces** (2/16 at 25 k, 10/16 at 50 k), with its RAM twin at 0/16.
 
-**Parity.** Every table address, the spread, and the recovery trace count
-match the single-part rig this generalises — and so do the nulls: that rig
-recovered nothing from either library at 50 000 traces. The restructure
-changed nothing that matters.
+**Stock Mbed-TLS has no flash-timing channel**, because
+`MBEDTLS_AES_ROM_TABLES` defaults off and its tables are generated into
+RAM at run time — a negative control that came with the library, with the
+positive control one flag away. **wolfSSL has no such default**: its
+tables are in flash in every build.
 
-The F429 port measures correctly and its accelerator axis works (sd 3.88
-at zero wait states, 31.59 at five, twin 0.0224) but **has not recovered a
-key**; [what is and is not established there](results/stm32f429zi/README.md).
+### Two different reasons a recovery fails, and they look identical
+
+Both of these bit during this work and both were first misread:
+
+* **The pair model.** Scoring only the 24 intra-column byte pairs, neither
+  third-party library recovered anything at 20 000 traces. About half of
+  their consecutive round-10 reads cross a column boundary, and that model
+  cannot express those pairs. All 120 pairs, on the same capture files,
+  reach the exact key at 2 500. More traces would not have helped, and the
+  margin scaling says so without taking any: a real margin is in cycles
+  and holds its size as n grows, a noise margin falls as 1/√n.
+* **The trace count.** On the F429 the model was fine and the data was
+  short — 20 000 gave 3/16, 100 000 gives the key.
+
+A partial recovery that does not improve with data is a model problem; one
+that climbs is a data problem. Telling them apart costs one ladder, and
+guessing instead costs a wrong conclusion in a README. **Neither pair
+model dominates**, either — on the reference cipher the narrow one wins —
+so `tools/attack.py` runs both and says which.
+
+**Parity.** Every table address, the spread, each recovery trace count and
+the one partial result (6/16) match the single-part rig this generalises.
 
 ## Layout
 

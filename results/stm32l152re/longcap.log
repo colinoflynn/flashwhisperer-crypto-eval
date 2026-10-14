@@ -1,0 +1,300 @@
+######## refsbox-sbox-ram0  n=100000
+== stm32l152re / refsbox-sbox-ram0-vcp-b115200-tsystick-w1-pad0 on COM53
+  $ -m pyocd flash -t stm32l152retx -u 066DFF565271525067103647 D:\Dropbox\academic\claude_research\new-flash-repos\mcu-crypto-eval\build\stm32l152re\refsbox-sbox-ram0-vcp-b115200-tsystick-w1-pad0\fw.bin
+  resync took 17 filler bytes
+  ident  : proto=1 layout=s table=0x08001400 acr=0x7 clk=32000000 Hz ram=0 cyc=1 warmup=1
+  libinfo: refsbox 0.0.0 [stock] tabs=2 (0x08001400 0x08000400 0x00000000) code=0x08002008 build=0
+      2000/100000  248 enc/s
+      4000/100000  248 enc/s
+      6000/100000  248 enc/s
+      8000/100000  248 enc/s
+     10000/100000  248 enc/s
+     12000/100000  248 enc/s
+     14000/100000  248 enc/s
+     16000/100000  248 enc/s
+     18000/100000  248 enc/s
+     20000/100000  248 enc/s
+     22000/100000  248 enc/s
+     24000/100000  248 enc/s
+     26000/100000  248 enc/s
+     28000/100000  248 enc/s
+     30000/100000  248 enc/s
+     32000/100000  248 enc/s
+     34000/100000  248 enc/s
+     36000/100000  248 enc/s
+     38000/100000  248 enc/s
+     40000/100000  248 enc/s
+     42000/100000  248 enc/s
+     44000/100000  248 enc/s
+     46000/100000  248 enc/s
+     48000/100000  248 enc/s
+     50000/100000  248 enc/s
+     52000/100000  248 enc/s
+     54000/100000  248 enc/s
+     56000/100000  248 enc/s
+     58000/100000  248 enc/s
+     60000/100000  248 enc/s
+     62000/100000  248 enc/s
+     64000/100000  248 enc/s
+     66000/100000  248 enc/s
+     68000/100000  248 enc/s
+     70000/100000  248 enc/s
+     72000/100000  248 enc/s
+     74000/100000  248 enc/s
+     76000/100000  248 enc/s
+     78000/100000  248 enc/s
+     80000/100000  248 enc/s
+     82000/100000  248 enc/s
+     84000/100000  248 enc/s
+     86000/100000  248 enc/s
+     88000/100000  248 enc/s
+     90000/100000  248 enc/s
+     92000/100000  248 enc/s
+     94000/100000  248 enc/s
+     96000/100000  248 enc/s
+     98000/100000  248 enc/s
+    100000/100000  248 enc/s
+  ciphertexts: all 100000 match the reference AES
+  cyc: mean 5540.024  sd 2.1879  min 5528  max 5545  distinct 18
+  wrote results\stm32l152re\refsbox-sbox-ram0-vcp-b115200-tsystick-w1-pad0-n100000.npz
+  meta: {"mcu": "stm32l152re", "variant": "refsbox-sbox-ram0-vcp-b115200-tsystick-w1-pad0", "n": 100000, "seed": 1, "baud": 115200, "port": "COM53", "probe": "066DFF565271525067103647", "lib": "refsbox", "lib_version": "0.0.0", "cfg": 0, "cfg_str": "stock", "build_byte": 0, "table_addr": 134222848, "tables": [134222848, 134218752, 0], "code_addr": 134225928, "acr": 7, "clk_hz": 32000000, "layout": "s", "flags": 14, "tables_in_ram": false, "warmup": true}
+######## mbedtls-rom1-few0-ram0  n=100000
+== stm32l152re / mbedtls-rom1-few0-ram0-vcp-b115200-tsystick-w1-pad0 on COM53
+  $ -m pyocd flash -t stm32l152retx -u 066DFF565271525067103647 D:\Dropbox\academic\claude_research\new-flash-repos\mcu-crypto-eval\build\stm32l152re\mbedtls-rom1-few0-ram0-vcp-b115200-tsystick-w1-pad0\fw.bin
+  resync took 17 filler bytes
+  ident  : proto=1 layout=? table=0x08001400 acr=0x7 clk=32000000 Hz ram=0 cyc=1 warmup=1
+  libinfo: mbedtls 3.6.7 [romtab] tabs=3 (0x08001400 0x08000400 0x08001500) code=0x0800373c build=0
+      2000/100000  249 enc/s
+      4000/100000  249 enc/s
+      6000/100000  249 enc/s
+      8000/100000  249 enc/s
+     10000/100000  249 enc/s
+     12000/100000  249 enc/s
+     14000/100000  249 enc/s
+     16000/100000  249 enc/s
+     18000/100000  249 enc/s
+     20000/100000  249 enc/s
+     22000/100000  249 enc/s
+     24000/100000  249 enc/s
+     26000/100000  249 enc/s
+     28000/100000  249 enc/s
+     30000/100000  249 enc/s
+     32000/100000  249 enc/s
+     34000/100000  249 enc/s
+     36000/100000  249 enc/s
+     38000/100000  249 enc/s
+     40000/100000  249 enc/s
+     42000/100000  249 enc/s
+     44000/100000  249 enc/s
+     46000/100000  249 enc/s
+     48000/100000  249 enc/s
+     50000/100000  249 enc/s
+     52000/100000  249 enc/s
+     54000/100000  249 enc/s
+     56000/100000  249 enc/s
+     58000/100000  249 enc/s
+     60000/100000  249 enc/s
+     62000/100000  249 enc/s
+     64000/100000  249 enc/s
+     66000/100000  249 enc/s
+     68000/100000  249 enc/s
+     70000/100000  249 enc/s
+     72000/100000  249 enc/s
+     74000/100000  249 enc/s
+     76000/100000  249 enc/s
+     78000/100000  249 enc/s
+     80000/100000  249 enc/s
+     82000/100000  249 enc/s
+     84000/100000  249 enc/s
+     86000/100000  249 enc/s
+     88000/100000  249 enc/s
+     90000/100000  249 enc/s
+     92000/100000  249 enc/s
+     94000/100000  249 enc/s
+     96000/100000  249 enc/s
+     98000/100000  249 enc/s
+    100000/100000  249 enc/s
+  ciphertexts: all 100000 match the reference AES
+  cyc: mean 1627.363  sd 0.7863  min 1622  max 1628  distinct 7
+  wrote results\stm32l152re\mbedtls-rom1-few0-ram0-vcp-b115200-tsystick-w1-pad0-n100000.npz
+  meta: {"mcu": "stm32l152re", "variant": "mbedtls-rom1-few0-ram0-vcp-b115200-tsystick-w1-pad0", "n": 100000, "seed": 1, "baud": 115200, "port": "COM53", "probe": "066DFF565271525067103647", "lib": "mbedtls", "lib_version": "3.6.7", "cfg": 2, "cfg_str": "romtab", "build_byte": 0, "table_addr": 134222848, "tables": [134222848, 134218752, 134223104], "code_addr": 134231868, "acr": 7, "clk_hz": 32000000, "layout": "?", "flags": 14, "tables_in_ram": false, "warmup": true}
+######## mbedtls-rom1-few1-ram0  n=100000
+== stm32l152re / mbedtls-rom1-few1-ram0-vcp-b115200-tsystick-w1-pad0 on COM53
+  $ -m pyocd flash -t stm32l152retx -u 066DFF565271525067103647 D:\Dropbox\academic\claude_research\new-flash-repos\mcu-crypto-eval\build\stm32l152re\mbedtls-rom1-few1-ram0-vcp-b115200-tsystick-w1-pad0\fw.bin
+  resync took 17 filler bytes
+  ident  : proto=1 layout=? table=0x08000800 acr=0x7 clk=32000000 Hz ram=0 cyc=1 warmup=1
+  libinfo: mbedtls 3.6.7 [romtab+fewer] tabs=3 (0x08000800 0x08000400 0x08000900) code=0x08001f78 build=0
+      2000/100000  249 enc/s
+      4000/100000  249 enc/s
+      6000/100000  249 enc/s
+      8000/100000  249 enc/s
+     10000/100000  249 enc/s
+     12000/100000  249 enc/s
+     14000/100000  249 enc/s
+     16000/100000  249 enc/s
+     18000/100000  249 enc/s
+     20000/100000  249 enc/s
+     22000/100000  249 enc/s
+     24000/100000  249 enc/s
+     26000/100000  249 enc/s
+     28000/100000  249 enc/s
+     30000/100000  249 enc/s
+     32000/100000  249 enc/s
+     34000/100000  249 enc/s
+     36000/100000  249 enc/s
+     38000/100000  249 enc/s
+     40000/100000  249 enc/s
+     42000/100000  249 enc/s
+     44000/100000  249 enc/s
+     46000/100000  249 enc/s
+     48000/100000  249 enc/s
+     50000/100000  249 enc/s
+     52000/100000  249 enc/s
+     54000/100000  249 enc/s
+     56000/100000  249 enc/s
+     58000/100000  249 enc/s
+     60000/100000  249 enc/s
+     62000/100000  249 enc/s
+     64000/100000  249 enc/s
+     66000/100000  249 enc/s
+     68000/100000  249 enc/s
+     70000/100000  249 enc/s
+     72000/100000  249 enc/s
+     74000/100000  249 enc/s
+     76000/100000  249 enc/s
+     78000/100000  249 enc/s
+     80000/100000  249 enc/s
+     82000/100000  249 enc/s
+     84000/100000  249 enc/s
+     86000/100000  249 enc/s
+     88000/100000  249 enc/s
+     90000/100000  249 enc/s
+     92000/100000  249 enc/s
+     94000/100000  249 enc/s
+     96000/100000  249 enc/s
+     98000/100000  249 enc/s
+    100000/100000  249 enc/s
+  ciphertexts: all 100000 match the reference AES
+  cyc: mean 1639.984  sd 1.7742  min 1626  max 1642  distinct 15
+  wrote results\stm32l152re\mbedtls-rom1-few1-ram0-vcp-b115200-tsystick-w1-pad0-n100000.npz
+  meta: {"mcu": "stm32l152re", "variant": "mbedtls-rom1-few1-ram0-vcp-b115200-tsystick-w1-pad0", "n": 100000, "seed": 1, "baud": 115200, "port": "COM53", "probe": "066DFF565271525067103647", "lib": "mbedtls", "lib_version": "3.6.7", "cfg": 6, "cfg_str": "romtab+fewer", "build_byte": 0, "table_addr": 134219776, "tables": [134219776, 134218752, 134220032], "code_addr": 134225784, "acr": 7, "clk_hz": 32000000, "layout": "?", "flags": 14, "tables_in_ram": false, "warmup": true}
+######## wolfssl-few0-ram0  n=100000
+== stm32l152re / wolfssl-few0-ram0-vcp-b115200-tsystick-w1-pad0 on COM53
+  $ -m pyocd flash -t stm32l152retx -u 066DFF565271525067103647 D:\Dropbox\academic\claude_research\new-flash-repos\mcu-crypto-eval\build\stm32l152re\wolfssl-few0-ram0-vcp-b115200-tsystick-w1-pad0\fw.bin
+  resync took 17 filler bytes
+  ident  : proto=1 layout=? table=0x08000400 acr=0x7 clk=32000000 Hz ram=0 cyc=1 warmup=1
+  libinfo: wolfssl 5.9.4 [stock] tabs=1 (0x00000000 0x08000400 0x00000000) code=0x08002c1c build=0
+      2000/100000  248 enc/s
+      4000/100000  248 enc/s
+      6000/100000  248 enc/s
+      8000/100000  248 enc/s
+     10000/100000  248 enc/s
+     12000/100000  248 enc/s
+     14000/100000  248 enc/s
+     16000/100000  248 enc/s
+     18000/100000  248 enc/s
+     20000/100000  248 enc/s
+     22000/100000  248 enc/s
+     24000/100000  248 enc/s
+     26000/100000  248 enc/s
+     28000/100000  248 enc/s
+     30000/100000  248 enc/s
+     32000/100000  248 enc/s
+     34000/100000  248 enc/s
+     36000/100000  248 enc/s
+     38000/100000  248 enc/s
+     40000/100000  248 enc/s
+     42000/100000  248 enc/s
+     44000/100000  248 enc/s
+     46000/100000  248 enc/s
+     48000/100000  248 enc/s
+     50000/100000  248 enc/s
+     52000/100000  248 enc/s
+     54000/100000  248 enc/s
+     56000/100000  248 enc/s
+     58000/100000  248 enc/s
+     60000/100000  248 enc/s
+     62000/100000  248 enc/s
+     64000/100000  248 enc/s
+     66000/100000  248 enc/s
+     68000/100000  248 enc/s
+     70000/100000  248 enc/s
+     72000/100000  248 enc/s
+     74000/100000  248 enc/s
+     76000/100000  248 enc/s
+     78000/100000  248 enc/s
+     80000/100000  248 enc/s
+     82000/100000  248 enc/s
+     84000/100000  248 enc/s
+     86000/100000  248 enc/s
+     88000/100000  248 enc/s
+     90000/100000  248 enc/s
+     92000/100000  248 enc/s
+     94000/100000  248 enc/s
+     96000/100000  248 enc/s
+     98000/100000  248 enc/s
+    100000/100000  248 enc/s
+  ciphertexts: all 100000 match the reference AES
+  cyc: mean 3414.749  sd 0.5869  min 3407  max 3415  distinct 8
+  wrote results\stm32l152re\wolfssl-few0-ram0-vcp-b115200-tsystick-w1-pad0-n100000.npz
+  meta: {"mcu": "stm32l152re", "variant": "wolfssl-few0-ram0-vcp-b115200-tsystick-w1-pad0", "n": 100000, "seed": 1, "baud": 115200, "port": "COM53", "probe": "066DFF565271525067103647", "lib": "wolfssl", "lib_version": "5.9.4", "cfg": 0, "cfg_str": "stock", "build_byte": 0, "table_addr": 134218752, "tables": [0, 134218752, 0], "code_addr": 134229020, "acr": 7, "clk_hz": 32000000, "layout": "?", "flags": 14, "tables_in_ram": false, "warmup": true}
+######## wolfssl-few1-ram0  n=100000
+== stm32l152re / wolfssl-few1-ram0-vcp-b115200-tsystick-w1-pad0 on COM53
+  $ -m pyocd flash -t stm32l152retx -u 066DFF565271525067103647 D:\Dropbox\academic\claude_research\new-flash-repos\mcu-crypto-eval\build\stm32l152re\wolfssl-few1-ram0-vcp-b115200-tsystick-w1-pad0\fw.bin
+  resync took 17 filler bytes
+  ident  : proto=1 layout=? table=0x08000400 acr=0x7 clk=32000000 Hz ram=0 cyc=1 warmup=1
+  libinfo: wolfssl 5.9.4 [fewer] tabs=1 (0x08000400 0x00000000 0x00000000) code=0x080014d0 build=0
+      2000/100000  247 enc/s
+      4000/100000  247 enc/s
+      6000/100000  247 enc/s
+      8000/100000  247 enc/s
+     10000/100000  247 enc/s
+     12000/100000  247 enc/s
+     14000/100000  247 enc/s
+     16000/100000  247 enc/s
+     18000/100000  247 enc/s
+     20000/100000  247 enc/s
+     22000/100000  247 enc/s
+     24000/100000  248 enc/s
+     26000/100000  248 enc/s
+     28000/100000  248 enc/s
+     30000/100000  248 enc/s
+     32000/100000  248 enc/s
+     34000/100000  248 enc/s
+     36000/100000  248 enc/s
+     38000/100000  247 enc/s
+     40000/100000  247 enc/s
+     42000/100000  248 enc/s
+     44000/100000  248 enc/s
+     46000/100000  248 enc/s
+     48000/100000  248 enc/s
+     50000/100000  248 enc/s
+     52000/100000  248 enc/s
+     54000/100000  248 enc/s
+     56000/100000  248 enc/s
+     58000/100000  248 enc/s
+     60000/100000  248 enc/s
+     62000/100000  248 enc/s
+     64000/100000  248 enc/s
+     66000/100000  248 enc/s
+     68000/100000  248 enc/s
+     70000/100000  248 enc/s
+     72000/100000  248 enc/s
+     74000/100000  248 enc/s
+     76000/100000  248 enc/s
+     78000/100000  248 enc/s
+     80000/100000  248 enc/s
+     82000/100000  248 enc/s
+     84000/100000  248 enc/s
+     86000/100000  248 enc/s
+     88000/100000  248 enc/s
+     90000/100000  248 enc/s
+     92000/100000  248 enc/s
+     94000/100000  248 enc/s
+     96000/100000  248 enc/s
+     98000/100000  248 enc/s
+    100000/100000  248 enc/s
+  ciphertexts: all 100000 match the reference AES
+  cyc: mean 4803.027  sd 2.1921  min 4792  max 4808  distinct 17
+  wrote results\stm32l152re\wolfssl-few1-ram0-vcp-b115200-tsystick-w1-pad0-n100000.npz
+  meta: {"mcu": "stm32l152re", "variant": "wolfssl-few1-ram0-vcp-b115200-tsystick-w1-pad0", "n": 100000, "seed": 1, "baud": 115200, "port": "COM53", "probe": "066DFF565271525067103647", "lib": "wolfssl", "lib_version": "5.9.4", "cfg": 4, "cfg_str": "fewer", "build_byte": 0, "table_addr": 134218752, "tables": [134218752, 0, 0], "code_addr": 134223056, "acr": 7, "clk_hz": 32000000, "layout": "?", "flags": 14, "tables_in_ram": false, "warmup": true}

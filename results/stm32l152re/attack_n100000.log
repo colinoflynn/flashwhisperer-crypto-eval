@@ -1,0 +1,10 @@
+
+== mbedtls-rom1-few0-ram0-vcp-b115200-tsystick-w1-pad0-n100000.npz
+   mbedtls 3.6.7 [romtab]  table 0x08001400  n=100000  sd 0.7863  distinct 7
+     n=2500    ls=3 off=0  120 16/16  bf=[]          EXACT MASTER KEY  (25s)
+     n=2500    ls=3 off=0  24  10/16  adj=ct         -  (10s)
+
+== mbedtls-rom1-few1-ram0-vcp-b115200-tsystick-w1-pad0-n100000.npz
+   mbedtls 3.6.7 [romtab+fewer]  table 0x08000800  n=100000  sd 1.7742  distinct 15
+     n=2500    ls=3 off=0  120  9/16  bf=[]          -  (36s)
+     n=2500    ls=3 off=0  24   4/16  adj=ct         -  (10s)
