@@ -1,0 +1,17 @@
+# Extra pyocd arguments for this part, one per line, blank lines and
+# lines starting with # ignored. Read by tools/capture.py.
+#
+# This board needs an UNDER-RESET connect. Attaching to it running gives
+#
+#     STLink error (9): Get IDCODE error
+#
+# and the flash never happens. It is specifically the attach that fails:
+# with the same firmware refusing to be re-flashed, the victim answers
+# SS_V_IDENT on its serial port perfectly well, so the board is alive and
+# only SWD is shut out. The first flash of a session can succeed and
+# later ones fail, which makes it look intermittent when it is not.
+#
+# Cause not established. Recorded as a property of this board that costs
+# nothing to work around.
+-O
+connect_mode=under-reset

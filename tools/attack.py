@@ -102,7 +102,7 @@ def main(argv=None):
     shifts = [int(x) for x in a.line_shifts.split(",")]
     models = tuple(m.strip() for m in a.models.split(","))
 
-    ladders, metas, controls, sds = {}, {}, set(), {}
+    ladders, metas, controls, sds, ns = {}, {}, set(), {}, {}
     for p in paths:
         cap, meta, is_control = load(p)
         # KEY ON THE FILE, NOT ON meta["variant"]. Two captures of one
@@ -120,6 +120,7 @@ def main(argv=None):
 
         sd = float(cap.timing.std(ddof=1)) if len(cap.timing) > 1 else 0.0
         sds[key] = sd
+        ns[key] = len(cap.timing)
         uniq = len(np.unique(cap.timing))
         print("\n== %s%s" % (p.name, "   [CONTROL]" if is_control else ""))
         print("   %s %s [%s]  table 0x%08x  n=%d  sd %.4f  distinct %d"
@@ -153,7 +154,17 @@ def main(argv=None):
     for k in sorted(ladders):
         lad, meta, sd = ladders[k], metas[k], sds[k]
         if not lad.trials:
-            note = "constant - nothing to recover from"
+            # An empty ladder has TWO causes and they are not the same
+            # answer. A bit-exactly constant capture really has nothing in
+            # it. A capture SHORTER than the smallest rung was simply never
+            # scored, and calling that "constant" reports a measurement
+            # nobody took - which it did, on a 2 000-trace F746 pilot left
+            # in a directory of 25 000-trace cells.
+            if ns[k] < min(n_values):
+                note = ("only %d traces, below the smallest ladder rung (%d)"
+                        " - NOT SCORED" % (ns[k], min(n_values)))
+            else:
+                note = "constant - nothing to recover from"
         elif lad.exact_at is not None:
             b = lad.best
             note = "EXACT at n=%d (%s)" % (b.n, b.geometry.label)

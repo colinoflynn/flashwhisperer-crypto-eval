@@ -167,15 +167,43 @@ the shape a first-round attack looks for. It would manufacture a channel.
 
 ## What this design does not settle
 
-* Whether the board contract is wide enough. It was drawn from two probes
-  on Cortex-M parts. `ssb_cyc_delta` exists because the first part counted
-  DOWN in 24 bits, which is mild evidence the seam is in the right place,
-  but a part whose counter isn't at core rate, or whose accelerator isn't
-  expressible as one word, would stretch it.
+* Whether the board contract is wide enough. PARTLY ANSWERED, and it is
+  fair to say the question has been put properly now. It was drawn from
+  two probes on Cortex-M parts, and the worry recorded here was "a part
+  whose accelerator isn't expressible as one word would stretch it".
+  Two such parts have since been ported and neither broke it:
+
+  | | its accelerator | what the word had to do |
+  |---|---|---|
+  | H723 | nothing in `FLASH_ACR`; the M7 L1 caches, in the core's SCB | packed from two peripherals |
+  | F746 | `FLASH_ACR` with PRFTEN/ARTEN and the M7 L1 caches | spans both, `FLASH_ACR`'s own bits kept in the low half |
+
+  The escape hatch the contract documents - pack the fields, document the
+  packing in the board's own header - carried both, and the protocol
+  layer and the host still cannot tell a packed word from a raw
+  `FLASH_ACR`. What is still untested is a counter that is NOT at core
+  rate, which is the other half of the original worry.
+* Non-Cortex-M parts. Nothing in the protocol or the host assumes ARM, and
+  the counter hook is already wide enough for a RISC-V `mcycle` or an
+  MSP430 timer. None has been ported, so that's an argument rather than a
+  measurement. Worth knowing what stops it on this bench: the two
+  non-ST boards attached, a CC1352R1 and an RA2A1, are reached by an
+  XDS110 and a J-Link that `pyocd` does not drive, so they need a flash
+  path before they need a board file.
 * Non-Cortex-M parts. Nothing in the protocol or the host assumes ARM, and
   the counter hook is already wide enough for a RISC-V `mcycle` or an
   MSP430 timer. None has been ported, so that's an argument rather than a
   measurement.
-* Whether `eval/mcu/<part>/` earns its own directory. It currently holds
-  almost nothing. If it stays that way it should collapse into
-  `mcufw/<part>/eval.mk`.
+* Whether `eval/mcu/<part>/` earns its own directory. STILL NO, and now
+  for a better reason than "it is small". All four parts have an
+  `eval.mk` holding the same two things - the flash read width and the
+  accelerator words worth sweeping - and NOTHING READS EITHER OF THEM.
+  `build.mk` has an `-include` for the file and no variable in it is
+  consumed anywhere, so these are documentation that happens to be
+  written in make syntax. Two of the four were missing entirely while
+  their parts were being measured, which is what that kind of file does.
+
+  The width in particular wants to be somewhere a script can reach,
+  because `tools/attack.py` needs it and currently gets it from a human
+  typing `--line-shifts`. Collapsing the directory is the smaller half of
+  that job; the larger half is deciding who should read the number.

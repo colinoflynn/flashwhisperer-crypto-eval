@@ -99,7 +99,23 @@ def pyocd_target(mcu: str) -> str:
     return p.read_text().strip()
 
 
-def flash(probe: str, target: str, binary: pathlib.Path) -> None:
+def pyocd_opts(mcu: str) -> list:
+    """Extra pyocd arguments this part needs, from its own directory.
+
+    Optional; most parts have none. The G474 here needs
+    `-O connect_mode=under-reset`, because attaching to it while it runs
+    fails with "STLink error (9): Get IDCODE error" even though the
+    victim is answering on its serial port at the time.
+    """
+    p = _ROOT / "mcufw" / mcu / "pyocd.opts"
+    if not p.is_file():
+        return []
+    return [ln.strip() for ln in p.read_text().splitlines()
+            if ln.strip() and not ln.strip().startswith("#")]
+
+
+def flash(probe: str, target: str, binary: pathlib.Path,
+          extra=()) -> None:
     """pyocd over SWD. Drag-and-drop to the ST-LINK volume also works and is
     the historical path, but it is SILENT ON FAILURE and cannot reset a
     wedged board without a reflash - and on a host with two boards of the
@@ -107,8 +123,8 @@ def flash(probe: str, target: str, binary: pathlib.Path) -> None:
     # `python -m pyocd`, not the `pyocd` console script: the script is not
     # on PATH in every environment that has the package, and the failure is
     # a bare WinError 2 from CreateProcess that says nothing about pyocd.
-    cmd = [sys.executable, "-m", "pyocd", "flash",
-           "-t", target, "-u", probe, str(binary)]
+    cmd = ([sys.executable, "-m", "pyocd", "flash", "-t", target,
+            "-u", probe] + list(extra) + [str(binary)])
     print("  $", " ".join(cmd[1:]))
     # pyocd prints check marks; a Windows console's default codec cannot
     # encode them and the run dies in its logger rather than in the flash.
@@ -233,7 +249,8 @@ def main(argv=None):
 
     print("== %s / %s on %s" % (a.mcu, a.variant, port))
     if a.probe:
-        flash(a.probe, a.target or pyocd_target(a.mcu), binary)
+        flash(a.probe, a.target or pyocd_target(a.mcu), binary,
+              pyocd_opts(a.mcu))
         # A probe run works right after a flash; the CDC port is freshly
         # enumerated and the device is at its reset vector.
         time.sleep(1.0)

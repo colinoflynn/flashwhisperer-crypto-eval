@@ -241,7 +241,7 @@ the first trace count at which the exact master key falls out.
 
 | | |
 |---|---|
-| parts | STM32L152RE (M3, no cache) measured across the matrix; STM32F429ZI (M4F, ART) and STM32H723ZG (M7, L1 caches) ported and measuring |
+| parts | six, all measuring: STM32L152RE (M3, no cache), STM32F401RE and STM32F429ZI (M4, ART), STM32G474RE (M4, 8-byte reads), STM32H723ZG (M7, L1 only) and STM32F746ZG (M7, ART *and* L1) |
 | libraries | the in-tree reference cipher, Mbed-TLS 3.6.7, wolfSSL 5.9.4 |
 | instruments | on-chip (the victim's own counter). The off-chip instrument is NOT moved over yet. |
 
@@ -269,6 +269,30 @@ only 12/16, flat to 25 000, with both caches off. Turning a cache on made
 the part easier to attack and more than twice as fast. Its DTCM twin is
 bit-exactly constant over 25 000 traces.
 [The full table](results/stm32h723zg/README.md).
+
+On the F746 the answer comes out the other way round, which is the point
+of having both. There the D-cache CLOSES the channel - a 256-byte S-box
+fits in its 4 KB, so the spread collapses to 0.09 cycles and the recovery
+to 0/16 - while the I-cache alone opens it wide enough to give up the
+exact key at 5 000 traces. ST's own default for the family, both caches
+on, lands at 1/16. Same vendor, same core, same cipher, and the safe
+setting on one part is the dangerous one on the other.
+[The full table](results/stm32f746zg/README.md).
+
+The two Cortex-M4 parts say the same thing as each other and it is the
+cleanest mitigation in the tree. On both, the ART DATA CACHE IS THE
+CHANNEL: clearing `DCEN` makes the cipher bit-exactly constant - one
+distinct cycle count over 25 000 traces - and makes it faster as well,
+because neither cache can hold the table it is being asked to cache.
+With `DCEN` set, both fall: the F401 gives up the exact key at 100 000
+traces and the G474 at 250 000, both with a compact T-table.
+[F401](results/stm32f401re/README.md),
+[G474](results/stm32g474re/README.md).
+
+Worth reading those two together for one reason: on both parts the table
+that BREAKS produces a SMALLER spread than the table that does not.
+Screening cells on sigma would have discarded the only configuration
+that yields a key.
 
 Stock Mbed-TLS has no flash-timing channel at all, since
 `MBEDTLS_AES_ROM_TABLES` defaults off and its tables get generated into
