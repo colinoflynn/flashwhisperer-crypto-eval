@@ -105,7 +105,15 @@ def main(argv=None):
     ladders, metas, controls, sds = {}, {}, set(), {}
     for p in paths:
         cap, meta, is_control = load(p)
-        key = meta["variant"]
+        # KEY ON THE FILE, NOT ON meta["variant"]. Two captures of one
+        # build at different accelerator words carry the SAME variant
+        # string - capture.py puts the word in the filename and leaves the
+        # metadata's variant alone - so keying on it silently dropped one
+        # of them here. Measured the annoying way: a run over three
+        # captures reported two, having spent the full ladder on the arm
+        # it then discarded. The filename is unique by construction, which
+        # is the property this needs.
+        key = p.stem
         ladders[key], metas[key] = None, meta
         if is_control:
             controls.add(key)
@@ -137,7 +145,11 @@ def main(argv=None):
     ok, offenders = controls_clean(ladders, controls)
 
     print("\n== summary (line_shifts=%s, models=%s) ==" % (a.line_shifts, a.models))
-    print("   %-40s %-14s %8s  %s" % ("variant", "cfg", "sd", "result"))
+    # The accelerator word is in here because on some parts it IS the
+    # axis, and two rows that differ only in it otherwise read as a
+    # duplicate.
+    print("   %-40s %-14s %7s %8s  %s"
+          % ("capture", "cfg", "acr", "sd", "result"))
     for k in sorted(ladders):
         lad, meta, sd = ladders[k], metas[k], sds[k]
         if not lad.trials:
@@ -149,8 +161,8 @@ def main(argv=None):
             b = lad.best
             note = "%d/16 best, n=%d (%s)" % (b.bytes_correct, b.n,
                                               b.geometry.label)
-        print("   %-40s %-14s %8.4f  %s"
-              % (k[:40], meta["cfg_str"], sd,
+        print("   %-40s %-14s %7s %8.4f  %s"
+              % (k[:40], meta["cfg_str"], "0x%x" % meta.get("acr", 0), sd,
                  note + ("   [CONTROL]" if k in controls else "")))
 
     if not ok:

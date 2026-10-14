@@ -241,7 +241,7 @@ the first trace count at which the exact master key falls out.
 
 | | |
 |---|---|
-| parts | STM32L152RE (M3, no cache) measured across the matrix; STM32F429ZI (M4F, ART) ported and measuring |
+| parts | STM32L152RE (M3, no cache) measured across the matrix; STM32F429ZI (M4F, ART) and STM32H723ZG (M7, L1 caches) ported and measuring |
 | libraries | the in-tree reference cipher, Mbed-TLS 3.6.7, wolfSSL 5.9.4 |
 | instruments | on-chip (the victim's own counter). The off-chip instrument is NOT moved over yet. |
 
@@ -262,6 +262,13 @@ AES-128 master key, from inverting the recovered round-10 key:
 
 On the F429 the reference cipher gives the exact key at 100 000 traces
 (2/16 at 25 k, 10/16 at 50 k), with its RAM twin at 0/16.
+
+On the H723 the reference cipher gives the exact key at 5 000 traces with
+the I-cache on - the configuration production H7 firmware ships - and
+only 12/16, flat to 25 000, with both caches off. Turning a cache on made
+the part easier to attack and more than twice as fast. Its DTCM twin is
+bit-exactly constant over 25 000 traces.
+[The full table](results/stm32h723zg/README.md).
 
 Stock Mbed-TLS has no flash-timing channel at all, since
 `MBEDTLS_AES_ROM_TABLES` defaults off and its tables get generated into

@@ -79,6 +79,26 @@ def port_for_probe(probe: str) -> str:
     return hits[0]
 
 
+def pyocd_target(mcu: str) -> str:
+    """The pyocd target name for a part, read from the part's own directory.
+
+    A table in here would mean adding a part edits a file outside
+    mcufw/<part>/, which is the one rule this tree is organised around. It
+    is one line in a file instead. The default used to be a hardcoded
+    `stm32l152retx` for every part, so a second part flashed only if the
+    caller remembered --target, and forgetting it writes a capture that is
+    named for one part and measured on another.
+    """
+    p = _ROOT / "mcufw" / mcu / "pyocd.target"
+    if not p.is_file():
+        raise SystemExit(
+            "no %s. Create it with the pyocd target name for this part -\n"
+            "`python -m pyocd list` prints the one it resolves for an\n"
+            "attached board, and `pyocd pack install <target>` fetches the\n"
+            "support pack if it is marked unsupported." % p)
+    return p.read_text().strip()
+
+
 def flash(probe: str, target: str, binary: pathlib.Path) -> None:
     """pyocd over SWD. Drag-and-drop to the ST-LINK volume also works and is
     the historical path, but it is SILENT ON FAILURE and cannot reset a
@@ -186,7 +206,8 @@ def main(argv=None):
                                    "--probe, which is the stable handle")
     ap.add_argument("--probe", help="debug probe serial. Used to flash, and "
                                     "to resolve --port when that is omitted")
-    ap.add_argument("--target", default="stm32l152retx", help="pyocd target")
+    ap.add_argument("--target", help="pyocd target; the default is read from "
+                                     "mcufw/<mcu>/pyocd.target")
     ap.add_argument("-n", type=int, default=20000)
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--baud", type=int, default=115200)
@@ -212,7 +233,7 @@ def main(argv=None):
 
     print("== %s / %s on %s" % (a.mcu, a.variant, port))
     if a.probe:
-        flash(a.probe, a.target, binary)
+        flash(a.probe, a.target or pyocd_target(a.mcu), binary)
         # A probe run works right after a flash; the CDC port is freshly
         # enumerated and the device is at its reset vector.
         time.sleep(1.0)

@@ -34,10 +34,12 @@ from the header.
    number from the flash arm is suspect until it's explained.
 7. Run the recovery. A statistic is not a channel.
 
-## The three traps
+## The traps
 
-These are in the contract header too, at the declaration. They're
-repeated here because each one produces *numbers* rather than an error.
+The first three are in the contract header too, at the declaration.
+They're repeated here because each one produces *numbers* rather than an
+error. The fourth produces no numbers at all, which is why it reads as
+something else entirely.
 
 ### `ssb_acr_set` must REFUSE what the clock cannot run
 
@@ -76,6 +78,31 @@ Two more ways a cycle counter lies, both silent:
   window, which reads exactly like a constant-time result. Re-arm it where
   it's used, not in board init.
 
+### A register that is not there HANGS, and the host blames the UART
+
+Reading a peripheral that is clock-gated, powered down or simply absent
+does not fault on every part. On the H723 it just never returns. Nothing
+in `ssb_*` has a timeout, so the victim stops mid-reply, and what the
+host prints is
+
+```
+mcueval.victim.VictimError: short response to 0x03: 8 of 16 bytes
+```
+
+which looks like a framing or baud problem and sends you to the UART. The
+UART is fine. Count the bytes instead: `SS_V_IDENT`'s payload is version,
+flags, layout, reserved, then three `u32`s, so eight bytes means it died
+in the *third* word - which is `ssb_acr_get`, and on that part it was one
+register inside it.
+
+Bisect it by replacing the body of the suspect hook with a constant and
+putting the registers back one at a time. Make sure the define you
+bisect with actually reaches the compiler: `build.mk` has no hook for an
+extra `-D`, and a first attempt here "proved" all four steps passed
+because every build had compiled the same constant. A bisection that does
+not change the binary proves nothing. Edit the source, or add the flag to
+`COMMON_DEFS` properly.
+
 ## `ssb_has_cyc()` returning 0 is a legitimate build
 
 That's the arm with no instrumentation in it. `SS_V_ENC_CYC` then answers
@@ -99,6 +126,37 @@ Five variables and nothing else:
 `BOARD_LINKS` is checked: asking for a link a part doesn't offer is a make
 error naming the ones it does, rather than a build that comes out wired to
 nothing.
+
+And one file beside it: `mcufw/<part>/pyocd.target`, holding the pyocd
+target name on one line. `tools/capture.py` reads it so that flashing a
+new part needs no argument and no table anywhere else. `python -m pyocd
+list` prints the name it resolves for an attached board, and
+`python -m pyocd pack install <target>` fetches the support pack when the
+listing marks it unsupported - the H723 and F746 both need that, the
+L152 and F429 do not.
+
+## When the accelerator is not one register
+
+The contract asks for ONE opaque word, and some parts do not have one.
+The H723 is the worked example: its `FLASH_ACR` holds `LATENCY` and
+`WRHIGHFREQ` and no accelerator bits at all, every cache on the data path
+is the Cortex-M7 L1 over in the core's `SCB`, and they are not even in the
+same peripheral. So `mcufw/stm32h723zg/regs.h` packs latency and the two
+cache enables into one word, documents the bit positions at the top, and
+`ssb_acr_get` reassembles the readback from the three registers.
+
+Two rules if you do that. The packing is the board's, so it goes in the
+board's header and nowhere else - the protocol layer and the host must
+stay unable to tell a packed word from a raw `FLASH_ACR`. And the
+readback must be *read*, never reconstructed from what was requested,
+which is what makes a refused configuration visible instead of silently
+recorded under the name it was asked for.
+
+Leave a knob out when it cannot reach what you are measuring, and say
+why. The H723's ART accelerates the ITCM flash alias, the victim runs
+from the AXI alias, so the ART cannot touch the data path - it is not in
+the word, and `regs.h` records both that reason and the fact that reading
+its register hangs this die anyway.
 
 ## Vendor headers
 

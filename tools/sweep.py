@@ -108,7 +108,7 @@ def main(argv=None):
         formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--mcu", default="stm32l152re")
     ap.add_argument("--probe", required=True)
-    ap.add_argument("--target", default="stm32l152retx")
+    ap.add_argument("--target", help="pyocd target; default from mcufw/<mcu>/pyocd.target")
     ap.add_argument("--link", default="vcp")
     ap.add_argument("--baud", type=int, default=115200)
     ap.add_argument("-n", type=int, default=20000)
@@ -125,12 +125,16 @@ def main(argv=None):
         try:
             variant = build(a.mcu, lib, opts, a.link, a.baud)
             print("  variant %s" % variant, flush=True)
-            r = subprocess.run(
-                [sys.executable, str(_ROOT / "tools" / "capture.py"),
-                 "--mcu", a.mcu, "--variant", variant,
-                 "--probe", a.probe, "--target", a.target,
-                 "-n", str(a.n), "--baud", str(a.baud)],
-                timeout=3600)
+            # --target only when asked for: capture.py defaults it from the
+            # part's own mcufw/<mcu>/pyocd.target, and passing None here
+            # would hand it the string "None".
+            cmd = [sys.executable, str(_ROOT / "tools" / "capture.py"),
+                   "--mcu", a.mcu, "--variant", variant,
+                   "--probe", a.probe,
+                   "-n", str(a.n), "--baud", str(a.baud)]
+            if a.target:
+                cmd += ["--target", a.target]
+            r = subprocess.run(cmd, timeout=3600)
             if r.returncode != 0:
                 failed.append((label, "capture returned %d" % r.returncode))
             else:
