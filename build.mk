@@ -65,10 +65,17 @@ ifeq ($(filter $(LINK),$(BOARD_LINKS)),)
   $(error $(MCU) does not offer LINK=$(LINK); it has: $(BOARD_LINKS))
 endif
 
+# Which counter the victim times itself with, where it has a choice. `none`
+# is not a degenerate case: it is the arm with NO instrumentation in the
+# victim at all, for an externally timed measurement, and SS_V_ENC_CYC then
+# answers with an error rather than with zeros so the host cannot mistake
+# a missing counter for a constant-time result.
 ifeq ($(TIMING),systick)
   COMMON_DEFS += -DSS_TIMING_SYSTICK
+else ifeq ($(TIMING),dwt)
+  COMMON_DEFS += -DSS_TIMING_DWT
 else ifneq ($(TIMING),none)
-  $(error TIMING must be systick or none)
+  $(error TIMING must be systick, dwt or none)
 endif
 
 ifeq ($(RAMTAB),1)

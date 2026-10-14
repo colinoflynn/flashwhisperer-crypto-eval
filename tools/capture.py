@@ -102,7 +102,8 @@ def flash(probe: str, target: str, binary: pathlib.Path) -> None:
         raise SystemExit("flash failed")
 
 
-def capture(port: str, n: int, seed: int, baud: int, want_cyc: bool):
+def capture(port: str, n: int, seed: int, baud: int, want_cyc: bool,
+            acr=None):
     rng = np.random.default_rng(seed)
     pts = rng.integers(0, 256, size=(n, 16), dtype=np.uint8)
 
@@ -113,6 +114,22 @@ def capture(port: str, n: int, seed: int, baud: int, want_cyc: bool):
         print("  resync took %d filler bytes" % fillers)
         print("  ident  :", ident)
         print("  libinfo:", info)
+
+        if acr is not None:
+            # SS_V_SET_ACR replies with the READBACK, never the requested
+            # value: the board layer refuses a configuration this clock
+            # cannot run, and this is how a caller finds out. Refusing to
+            # continue on a refusal matters -- a sweep that silently
+            # captured the old setting under the new name would file every
+            # point of the sweep under the wrong label.
+            got = v.set_acr(acr)
+            if got != acr:
+                raise SystemExit(
+                    "the device REFUSED accelerator word 0x%x and kept 0x%x.\n"
+                    "That is the board layer declining a configuration this\n"
+                    "clock cannot run. Nothing is captured." % (acr, got))
+            ident = v.ident()
+            print("  acr set:", ident)
 
         if want_cyc and not ident.reports_cyc:
             raise SystemExit(
@@ -174,6 +191,9 @@ def main(argv=None):
     ap.add_argument("-n", type=int, default=20000)
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--baud", type=int, default=115200)
+    ap.add_argument("--acr", help="set the flash accelerator word before "
+                                  "capturing, e.g. 0x705. The device replies "
+                                  "with the readback and a refusal aborts")
     ap.add_argument("--no-cyc", action="store_true",
                     help="do not ask for the on-chip cycle count")
     ap.add_argument("--out", help="output .npz; default results/<mcu>/<variant>.npz")
@@ -198,21 +218,43 @@ def main(argv=None):
         # enumerated and the device is at its reset vector.
         time.sleep(1.0)
 
+    acr = int(a.acr, 0) if a.acr else None
     pts, cts, cyc, ident, info = capture(port, a.n, a.seed, a.baud,
-                                         not a.no_cyc)
+                                         not a.no_cyc, acr)
     check_ciphertexts(pts, cts)
 
     if not a.no_cyc:
         uniq = len(np.unique(cyc))
         print("  cyc: mean %.3f  sd %.4f  min %d  max %d  distinct %d"
               % (cyc.mean(), cyc.std(ddof=1), cyc.min(), cyc.max(), uniq))
-        if uniq == 1:
-            print("  NOTE: one distinct cycle count over the whole capture.")
-            print("        That is what a table in RAM looks like, and it is")
-            print("        a result rather than a failure.")
 
+        # A COLUMN OF ZEROS IS A DEAD COUNTER, NOT A CONSTANT-TIME CIPHER,
+        # and the two look identical in every summary statistic. Nothing
+        # real encrypts a block in zero cycles, so this is cheap to tell
+        # apart -- and worth telling apart loudly, because the first DWT
+        # build brought up here produced exactly this while its own IDENT
+        # reported a working counter. The counter had been armed at boot
+        # and then switched off by the debug probe disconnecting.
+        if uniq == 1 and int(cyc[0]) == 0:
+            raise SystemExit(
+                "EVERY CYCLE COUNT IS ZERO. That is a dead counter, not a\n"
+                "constant-time cipher -- nothing encrypts a block in zero\n"
+                "cycles. On Cortex-M this is usually DWT: DEMCR.TRCENA is\n"
+                "cleared by the debug probe when it disconnects AFTER the\n"
+                "board booted, so a counter armed in board init is armed\n"
+                "and then turned off. Re-arm it somewhere that runs later.\n"
+                "Nothing is written.")
+        if uniq == 1:
+            print("  NOTE: one distinct cycle count over the whole capture,")
+            print("        and it is not zero. That is what a table in RAM")
+            print("        looks like: a result, not a failure.")
+
+    # The accelerator word goes in the FILENAME as well as the metadata:
+    # two captures that differ only in it are different measurements, and
+    # without it the second silently overwrites the first.
+    stem = a.variant + ("-acr%03x" % ident.acr if acr is not None else "")
     out = pathlib.Path(a.out) if a.out else (
-        _ROOT / "results" / a.mcu / (a.variant + ".npz"))
+        _ROOT / "results" / a.mcu / (stem + ".npz"))
     out.parent.mkdir(parents=True, exist_ok=True)
 
     # The DEVICE's answer, not the path's. Everything needed to attribute a
