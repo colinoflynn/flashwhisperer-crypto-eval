@@ -1,67 +1,111 @@
 """Last-round key recovery on a capture. THE PART THAT DECIDES.
 
-    python tools/attack.py results/stm32l152re/refsbox-sbox-ram0-*.npz
-    python tools/attack.py results/stm32l152re/*.npz --ladder 2500,5000,10000,20000
+    python tools/attack.py results/stm32l152re/*.npz --line-shifts 3,1
+    python tools/attack.py results/stm32f429zi/*.npz --line-shifts 4,2
 
 A STATISTIC IS NOT A CHANNEL. tools/capture.py reports a spread; a spread
-can be large and yield nothing, and a pooled z of -21.81 that recovers 0/16
-key bytes is not a channel whatever its size. This script runs the recovery
-and reports the first trace count at which the exact master key falls out.
+can be large and yield nothing. This reports whether the exact master key
+falls out, and at how many traces.
 
-TWO GEOMETRY FACTS, and getting either wrong returns a clean null rather
-than a degraded answer -- which is why both are taken from the capture
-rather than assumed:
+TWO PAIR MODELS, AND NEITHER DOMINATES. Both are run by default and the
+summary says which one won.
 
-  line_shift   log2 of the part's flash read width in bytes. It is a
-               PER-PART property and the library's default of 4 (16-byte
-               rows) is the Cortex-M4 case, not a constant of the attack.
-               Scoring an 8-byte row at 4 merges two real rows into one
-               partition and tests a collision that does not exist. It
-               comes from mcufw/<part>/board.mk via --line-shift, because
-               the device does not report its own flash width.
+  `24`   the intra-column byte pairs reachable from six row pairings,
+         unioned, both adjacencies swept.
+  `120`  every output-byte pair, with each key byte voted over the 15
+         that touch it.
 
-  line_off     the table's offset within its row, from the table address
-               the DEVICE reported and the capture recorded. A trace count
-               quoted without it is under-specified: the same firmware at
-               three link-time accidents has needed 6 250, 12 500 and
-               25 000 traces.
+  This file originally ran only the narrow one, and under it the two
+  third-party libraries here recovered nothing while the reference cipher
+  gave the exact key at 5 000 traces. The obvious reading was that they
+  need more traces. **That reading is wrong**, and it is wrong in a way
+  the data itself settles: a real effect's margin is in cycles and holds
+  its absolute size as n grows, while a noise margin falls as 1/sqrt(n).
+  Quadrupling the data halves the dead pair sets to within one per cent
+  and does not move the live ones -- so the signal is already saturated
+  and the missing bytes are not starved of data.
 
-BOTH ADJACENCIES AND ALL SIX PAIR SETS ARE SWEPT, NOT PREDICTED. A byte
-S-box build reads in state order; a T-table build that folds ShiftRows into
-the last round emits ciphertext-adjacent reads. Guessing wrong does not
-degrade gracefully -- it returns a clean null -- and inferring the
-exploitable pair from the read order has already cost two parts a wrong
-answer elsewhere.
+  What was missing is pairs the model cannot express. About half of these
+  libraries' consecutive round-10 reads CROSS a column boundary, and the
+  24-pair model reports those as absent. Scanning all 120 takes the same
+  captures to the exact key -- Mbed-TLS with ROM tables at 2 500 traces,
+  from a capture the narrow model scored 0/16 on at 20 000.
+
+  But the narrow model is not merely a worse version of the wide one: on
+  the reference cipher it reaches the exact key from fewer traces than
+  the 120-pair vote, which at the same count gets 14/16. So both run.
+
+THE CONTROLS ARE THE POINT, NOT AN AFTERTHOUGHT. A 120-pair vote has five
+times the freedom of a 24-pair one, so it can manufacture a recovery where
+the narrower model found none. Every bit-exactly constant build and every
+RAM twin is therefore scored with the IDENTICAL call, and a control that
+recovers anything invalidates the run rather than the build. `--controls`
+lists what was treated as one; the summary refuses to stand if any of them
+scored.
+
+TWO GEOMETRY FACTS, both of which return a clean null when wrong rather
+than a degraded answer:
+
+  line_shift   log2 of the flash read width in BYTES **divided by the
+               entry size of the table the last round reads**. On a part
+               with an 8-byte read that is 3 for a byte S-box and 1 for a
+               4-byte word table -- and WHICH of the two a configuration
+               reads is a property of the library's last round, not of the
+               part. So it is swept, not predicted.
+
+  line_off     the table's offset within its row, from the address the
+               DEVICE reported and the capture recorded. A trace count
+               quoted without it is under-specified.
 """
 from __future__ import annotations
 
 import argparse
 import glob
 import json
+import os
 import pathlib
 import sys
 import time
 
-import numpy as np
+# Be a good citizen: the recovery is the CPU-expensive half and this box
+# also drives the bench. Set before numpy is imported or it has no effect.
+_T = "2"
+if "--threads" in sys.argv:
+    _T = sys.argv[sys.argv.index("--threads") + 1]
+for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
+           "NUMEXPR_NUM_THREADS", "VECLIB_MAXIMUM_THREADS"):
+    os.environ.setdefault(_v, _T)
+
+import numpy as np                                            # noqa: E402
 
 _ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_ROOT / "flashwhisperer"))
 
+from flashattack import aesref, engine                        # noqa: E402
 from flashattack.lastround import (ROW_PAIRINGS, recover_k10,  # noqa: E402
                                    invert_ks)
 
 #: The victim's compiled-in key. Used only to SCORE; never sent anywhere.
 KEY = bytes.fromhex("2b7e151628aed2a6abf7158809cf4f3c")
+_K10 = list(np.asarray(aesref.key_expansion(KEY),
+                       dtype=np.uint8).reshape(-1)[-16:])
 
 
-def best_union(ct, y, n, line_shift, line_off):
-    """Best recovery over all six pair sets, for each adjacency separately.
+def model24(ct, y, n, line_shift, line_off):
+    """The 24 INTRA-COLUMN byte pairs: six row pairings, unioned, with each
+    key byte taken from whichever pairing scored the largest margin on it.
+    Both last-round adjacencies swept, because a byte S-box build reads in
+    state order while a T-table build that folds ShiftRows emits
+    ciphertext-adjacent reads, and guessing wrong returns a clean null.
 
-    Pair sets are merged by taking, for each round-10 byte, the candidate
-    from whichever pair set scored the largest margin on it. Complementary
-    pair sets each give eight bytes, so the union can reach all sixteen.
+    NEITHER MODEL DOMINATES, which is why both are run. This one is
+    narrower and, on the captures here, recovers the reference cipher's
+    exact key from fewer traces than the 120-pair vote does. The wide one
+    is what reaches the third-party libraries at all, because about half
+    of their consecutive round-10 reads cross a column boundary and this
+    model cannot express those pairs.
     """
-    out = {}
+    best = (0, False, None, None)
     for ct_adjacent in (False, True):
         union = {}
         for ps in ROW_PAIRINGS:
@@ -72,82 +116,91 @@ def best_union(ct, y, n, line_shift, line_off):
             for i in sorted(k10):
                 union.setdefault(i, []).append((margin, k10[i]))
         merged = {i: max(v)[1] for i, v in union.items()}
-        exact = False
-        master = None
+        got = sum(1 for i in merged if merged[i] == _K10[i])
+        exact, master = False, None
         if len(merged) == 16:
-            master = invert_ks({i: merged[i] for i in range(16)})
-            exact = (bytes(master) == KEY)
-        out["ct" if ct_adjacent else "state"] = (merged, exact, master)
-    return out
+            master = bytes(invert_ks({i: merged[i] for i in range(16)}))
+            exact = (master == KEY)
+        arm = "ct" if ct_adjacent else "state"
+        if (exact, got) > (best[1], best[0]):
+            best = (got, exact, master, arm)
+    return best            # (bytes_correct, exact, master, adjacency)
 
 
-def run_one(path: pathlib.Path, ladder, line_shift):
+def run_one(path: pathlib.Path, ladder, line_shifts, line_offs, models):
     d = np.load(path, allow_pickle=False)
     meta = json.loads(str(d["meta"]))
-    ct = d["ct"]
+    pt, ct = d["pt"], d["ct"]
     cyc = d["cyc"].astype(np.float64)
 
     tab = meta["table_addr"]
-    line_off = tab & ((1 << line_shift) - 1)
-    in_ram = meta.get("tables_in_ram", False)
+    uniq = len(np.unique(cyc))
+    sd = float(cyc.std(ddof=1)) if len(cyc) > 1 else 0.0
 
-    print("\n== %s" % path.name)
-    print("   %s %s [%s]  table 0x%08x  line_off %d  n=%d  sd %.4f  distinct %d"
+    # A build whose on-chip count is bit-exactly constant is a CONTROL: it
+    # has nothing to recover from, and if the vote finds something in it
+    # the vote is not trustworthy on this run.
+    is_control = (uniq == 1) or meta.get("tables_in_ram", False)
+
+    print("\n== %s%s" % (path.name, "   [CONTROL]" if is_control else ""))
+    print("   %s %s [%s]  table 0x%08x  n=%d  sd %.4f  distinct %d"
           % (meta["lib"], meta["lib_version"], meta["cfg_str"], tab,
-             line_off, len(cyc), cyc.std(ddof=1), len(np.unique(cyc))))
+             len(cyc), sd, uniq))
 
-    if len(np.unique(cyc)) == 1:
-        print("   one distinct cycle count: there is nothing to recover from,")
-        print("   which for a tables-in-RAM build IS the expected result.")
-        return dict(variant=meta["variant"], lib=meta["lib"],
-                    cfg=meta["cfg_str"], table=tab, line_off=line_off,
-                    tables_in_ram=in_ram, sd=0.0, exact_at=None,
-                    note="constant")
+    if uniq == 1:
+        print("   one distinct cycle count: nothing to recover from, and for"
+              " a tables-in-RAM build that IS the expected result.")
+        return [dict(variant=meta["variant"], lib=meta["lib"],
+                     cfg=meta["cfg_str"], table=tab, n=0, line_shift=None,
+                     line_off=None, model=None, sd=sd,
+                     bytes_correct=0, exact=False, control=True,
+                     note="constant")]
 
-    exact_at = None
     rows = []
     for n in ladder:
         if n > len(cyc):
             break
-        t0 = time.time()
-        res = best_union(ct, cyc, n, line_shift, line_off)
-        best = 0
-        for arm, (merged, exact, master) in res.items():
-            # Count correct round-10 bytes against the truth schedule.
-            k10_true = _true_k10()
-            got = sum(1 for i in merged if merged[i] == k10_true[i])
-            best = max(best, got)
-            tag = "EXACT MASTER KEY" if exact else "%d/16" % got
-            print("     n=%-6d %-5s %s  (%.1fs)"
-                  % (n, arm, tag, time.time() - t0))
-            if exact and exact_at is None:
-                exact_at = n
-        rows.append((n, best))
-        if exact_at is not None:
+        for ls in line_shifts:
+            # The table's offset within its flash row. Derived from the
+            # recorded address by default, which is right for a table the
+            # linker aligned -- but a library's own table can land
+            # anywhere, and the offset is worth 2x to 10x in traces, so it
+            # is sweepable. `--line-offs auto` keeps the derivation.
+            if line_offs is None:
+                offs = [tab & ((1 << ls) - 1)]
+            else:
+                offs = [o for o in line_offs if o < (1 << ls)]
+            for line_off in offs:
+                for model in models:
+                    t0 = time.time()
+                    if model == "120":
+                        res = engine.recover(
+                            ct[:n], cyc[:n], direction="enc", keysize=128,
+                            line_shift=ls, line_off=line_off, truth=_K10,
+                            verify=(bytes(pt[0]), bytes(ct[0])))
+                        got = int(res.truth_correct)
+                        exact = (res.master == KEY)
+                        extra = "bf=%s" % list(res.bruteforced)
+                    else:
+                        got, exact, _m, arm = model24(ct, cyc, n, ls, line_off)
+                        extra = "adj=%s" % arm
+                    tag = "EXACT MASTER KEY" if exact else "-"
+                    print("     n=%-7d ls=%d off=%-2d %-3s %2d/16  %-14s %s"
+                          "  (%.0fs)"
+                          % (n, ls, line_off, model, got, extra, tag,
+                             time.time() - t0))
+                    rows.append(dict(variant=meta["variant"], lib=meta["lib"],
+                                     cfg=meta["cfg_str"], table=tab, n=n,
+                                     line_shift=ls, line_off=line_off,
+                                     model=model, sd=sd, bytes_correct=got,
+                                     exact=bool(exact), control=is_control))
+                    if is_control and (exact or got > 4):
+                        print("   *** A CONTROL RECOVERED SOMETHING. The %s"
+                              "-pair model is not trustworthy on this run."
+                              " ***" % model)
+        if any(r["exact"] for r in rows if r["n"] == n):
             break
-
-    if exact_at is None:
-        print("   no exact key up to n=%d" % (rows[-1][0] if rows else 0))
-    else:
-        print("   EXACT MASTER KEY at %d traces" % exact_at)
-    return dict(variant=meta["variant"], lib=meta["lib"],
-                cfg=meta["cfg_str"], table=tab, line_off=line_off,
-                tables_in_ram=in_ram, sd=float(cyc.std(ddof=1)),
-                exact_at=exact_at)
-
-
-_K10 = None
-
-
-def _true_k10():
-    global _K10
-    if _K10 is None:
-        from flashattack import aesref
-        rk = aesref.key_expansion(KEY)
-        # The last round key is the final 16 bytes of the expansion.
-        flat = np.asarray(rk, dtype=np.uint8).reshape(-1)
-        _K10 = list(flat[-16:])
-    return _K10
+    return rows
 
 
 def main(argv=None):
@@ -155,12 +208,24 @@ def main(argv=None):
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("npz", nargs="+")
-    ap.add_argument("--ladder", default="2500,5000,10000,20000,50000")
-    ap.add_argument("--line-shift", type=int, default=3,
-                    help="log2 of the flash read width in BYTES. 3 = 8-byte "
-                         "rows (Cortex-M3 STM32L1), 4 = 16-byte, 5 = 32-byte. "
-                         "A PER-PART property; see mcufw/<part>/board.mk")
-    ap.add_argument("--out", help="write a JSON summary here")
+    ap.add_argument("--ladder", default="5000,20000,50000,100000,200000")
+    ap.add_argument("--line-shifts", default="3,1",
+                    help="log2(flash read bytes / table entry bytes), swept. "
+                         "8-byte read: 3 for a byte S-box, 1 for a 4-byte "
+                         "word table. 16-byte read: 4 and 2.")
+    ap.add_argument("--line-offs", default="auto",
+                    help="the table's offset within its flash row. `auto` "
+                         "derives it from the recorded address, which is "
+                         "right for a linker-aligned table; a comma list "
+                         "sweeps it, which is worth 2x to 10x in traces for "
+                         "a library table that landed at an arbitrary offset")
+    ap.add_argument("--models", default="120,24",
+                    help="which pair models to score. NEITHER DOMINATES: "
+                         "`24` (intra-column) reaches the reference cipher "
+                         "in fewer traces, `120` (all output-byte pairs) is "
+                         "what reaches the third-party libraries at all")
+    ap.add_argument("--threads", default="2")
+    ap.add_argument("--out")
     a = ap.parse_args(argv)
 
     paths = []
@@ -170,19 +235,65 @@ def main(argv=None):
         raise SystemExit("no captures matched")
 
     ladder = [int(x) for x in a.ladder.split(",")]
-    results = [run_one(p, ladder, a.line_shift) for p in paths]
+    shifts = [int(x) for x in a.line_shifts.split(",")]
+    offs = (None if a.line_offs.strip() == "auto"
+            else [int(x, 0) for x in a.line_offs.split(",")])
+    models = [m.strip() for m in a.models.split(",")]
 
-    print("\n== summary (line_shift=%d) ==" % a.line_shift)
-    print("   %-44s %7s %9s %s" % ("variant", "sd", "table", "exact at"))
-    for r in results:
-        print("   %-44s %7.4f %9s %s"
-              % (r["variant"][:44], r["sd"], "0x%06x" % (r["table"] & 0xFFFFFF),
-                 r["exact_at"] if r["exact_at"] else "-"))
+    rows = []
+    for p in paths:
+        rows.extend(run_one(p, ladder, shifts, offs, models))
+
+    # ---- the summary, and the control check that gates it ---------------
+    bad = [r for r in rows if r["control"] and (r["exact"] or r["bytes_correct"] > 4)]
+
+    print("\n== summary (line_shifts=%s, models=%s) =="
+          % (a.line_shifts, a.models))
+    print("   %-40s %-14s %7s %6s %4s %s"
+          % ("variant", "cfg", "sd", "n", "ls", "result"))
+    def rank(r):
+        """Best row for a variant: an exact key beats anything, then more
+        correct bytes, then the SMALLEST n that achieved it."""
+        return (r["exact"], r["bytes_correct"], -r["n"])
+
+    best = {}
+    for r in rows:
+        k = r["variant"]
+        if best.get(k) is None or rank(r) > rank(best[k]):
+            best[k] = r
+
+    for k in sorted(best):
+        r = best[k]
+        if r.get("note") == "constant":
+            note = "constant -- control"
+        elif r["exact"]:
+            note = "EXACT at n=%d ls=%d, %s-pair" % (
+                r["n"], r["line_shift"], r["model"])
+        else:
+            note = "%d/16 (best, n=%d ls=%d %s-pair)" % (
+                r["bytes_correct"], r["n"], r["line_shift"], r["model"])
+        print("   %-40s %-14s %7.4f %6s %4s %s"
+              % (k[:40], r["cfg"], r["sd"], r["n"] or "-",
+                 r["line_shift"] if r["line_shift"] is not None else "-",
+                 note))
+
+    if bad:
+        print("\n   *** THIS RUN IS NOT TRUSTWORTHY ***")
+        for r in bad:
+            print("   a control recovered %d/16: %s" % (r["bytes_correct"],
+                                                        r["variant"]))
+        print("   A 120-pair vote has five times the freedom of a 24-pair")
+        print("   one. If it scores on a build with nothing to find, it is")
+        print("   manufacturing, and no row above may be quoted.")
+    else:
+        ncon = len({r["variant"] for r in rows if r["control"]})
+        print("\n   controls clean: %d bit-exactly constant or RAM-twin "
+              "builds scored nothing under the identical call." % ncon)
 
     if a.out:
-        pathlib.Path(a.out).write_text(json.dumps(results, indent=2))
+        pathlib.Path(a.out).write_text(json.dumps(rows, indent=2))
         print("   wrote %s" % a.out)
-    return 0
+    return 1 if bad else 0
 
 
 if __name__ == "__main__":
