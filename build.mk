@@ -35,8 +35,13 @@ endif
 # The table residence twin. THE MANDATORY CONTROL: same code, same
 # instruction stream, same indices, tables moved to RAM by the linker.
 RAMTAB  ?= 0
-# Which physical link the victim speaks on.
-LINK    ?= header
+# Which physical link the victim speaks on. NO DEFAULT HERE: the parts do
+# not all offer the same links, so the default is the part's own first
+# choice and is set after board.mk has been read. Hardcoding `header` made
+# `make matrix` fail on the second part ported, which offers only `vcp` --
+# correctly refused rather than built wired to nothing, but refused for a
+# default this file had no business choosing.
+LINK    ?=
 # Whether the victim carries a cycle counter at all. `none` is the arm with
 # no instrumentation in it, for an externally timed measurement.
 TIMING  ?= systick
@@ -54,6 +59,11 @@ include $(LIBDIR)/lib.mk
 -include $(EVALDIR)/eval.mk
 
 # ---- link ----------------------------------------------------------------
+# The part's first declared link, unless the caller named one.
+ifeq ($(strip $(LINK)),)
+  LINK := $(firstword $(BOARD_LINKS))
+endif
+
 ifeq ($(LINK),vcp)
   COMMON_DEFS += -DSS_LINK_VCP
 else ifeq ($(LINK),header)

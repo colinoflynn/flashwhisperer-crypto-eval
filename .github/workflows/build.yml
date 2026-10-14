@@ -62,31 +62,7 @@ jobs:
             make matrix MCU=$mcu
             echo "::endgroup::"
           done
+      # The same script a human runs by hand, not a second copy of it
+      # living in a workflow file nobody executes locally.
       - name: the table slots must exist, and must MOVE for the RAM variant
-        run: |
-          set -e
-          fail=0
-          for mcu in $(ls mcufw); do
-            flash=$(find build/$mcu -name fw.elf -path '*refsbox*ram0*' | head -1)
-            ram=$(find build/$mcu -name fw.elf -path '*refsbox*ram1*' | head -1)
-            if [ -z "$flash" ] || [ -z "$ram" ]; then
-              echo "$mcu: no refsbox flash/RAM pair was built"; fail=1; continue
-            fi
-            fa=$(arm-none-eabi-nm "$flash" | awk '/ _tabS$/{print $1}')
-            ra=$(arm-none-eabi-nm "$ram"   | awk '/ _tabS$/{print $1}')
-            echo "$mcu: S-box flash=0x$fa ram=0x$ra"
-            if [ -z "$fa" ] || [ -z "$ra" ]; then
-              echo "  FAIL: the sections script collected no S-box at all."
-              echo "        That is what a stale tab_s.ld looks like, and at"
-              echo "        run time it reports address 0 -- which reads as"
-              echo "        'this library keeps its tables in RAM'."
-              fail=1
-            elif [ "$fa" = "$ra" ]; then
-              echo "  FAIL: the RAM variant did not move the table. The"
-              echo "        residence control is the one that separates a"
-              echo "        flash channel from an instrument artefact; if it"
-              echo "        does not move, both arms measure the same thing."
-              fail=1
-            fi
-          done
-          exit $fail
+        run: ./tools/check_tables_move.sh
