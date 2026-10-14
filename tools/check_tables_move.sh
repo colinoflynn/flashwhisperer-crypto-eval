@@ -14,7 +14,7 @@ for mcu in $(ls mcufw); do
     flash=$(find "build/$mcu" -name fw.elf -path '*refsbox*ram0*' 2>/dev/null | head -1)
     ram=$(find "build/$mcu" -name fw.elf -path '*refsbox*ram1*' 2>/dev/null | head -1)
     if [ -z "$flash" ] || [ -z "$ram" ]; then
-        echo "$mcu: no refsbox flash/RAM pair built -- run `make matrix MCU=$mcu`"
+        echo "$mcu: no refsbox flash/RAM pair built - run `make matrix MCU=$mcu`"
         fail=1; continue
     fi
     fa=$(arm-none-eabi-nm "$flash" | awk '/ _tabS$/{print $1}')

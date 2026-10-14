@@ -11,7 +11,7 @@
 #   * The linker's OUTPUT is only checked for the table symbols existing
 #     and moving between the flash and RAM variants. That catches a
 #     sections script that stopped collecting, which is the failure mode
-#     that would otherwise show up as "this library has no tables" -- but
+#     that would otherwise show up as "this library has no tables" - but
 #     it does not check that the tables are the right tables.
 #   * The toolchain here is not the one on the bench. A codegen difference
 #     between versions changes the instruction stream, and the instruction

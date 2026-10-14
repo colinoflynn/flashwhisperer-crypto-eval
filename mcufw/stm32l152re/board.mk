@@ -1,4 +1,4 @@
-# DESC: Cortex-M3, 32 MHz, one-bit LATENCY, no cache -- the floor case
+# DESC: Cortex-M3, 32 MHz, one-bit LATENCY, no cache - the floor case
 # STM32L152RE.
 #
 # The floor case, and the reference part: a measured baseline exists for it,

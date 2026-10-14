@@ -1,14 +1,14 @@
-/* refsbox -- this project's own byte S-box AES, and THE CONTROL ON THE RIG
+/* refsbox - this project's own byte S-box AES, and THE CONTROL ON THE RIG
  * ITSELF.
  *
  * The only "library" here whose source is in the tree rather than in libs/,
- * because it is not a library under test: it is the known quantity. Before
- * any third-party result on any part is worth reading, this provider has to
- * reproduce the baseline already measured for that part -- same table
- * address, same spread. If it does not, the instrument moved, not the
+ * since it isn't a library under test: it's the known quantity. Before any
+ * third-party result on any part is worth reading, this provider has to
+ * reproduce the baseline already measured for that part - same table
+ * address, same spread. If it doesn't, the instrument moved and not the
  * library.
  *
- * It is also the one provider with more than one table layout, so it is what
+ * It's also the one provider with more than one table layout, so it's what
  * a new part's porting checklist exercises first: 's' byte S-box, 't' four
  * word T-tables, 'c' one rotated T-table.
  */
@@ -22,12 +22,12 @@ static uint32_t rk[44];
 void prov_init(const uint8_t key[16])
 {
     /* aes_use_ram(0) ALWAYS. This cipher has its own RAM-table switch, which
-     * flips a POINTER the cipher reads through -- so the flash and RAM arms
+     * flips a POINTER the cipher reads through - so the flash and RAM arms
      * would differ in their instruction stream as well as in the table's
      * address. This repository uses the LINKER instead, which moves only the
-     * data: same code, same instruction stream, same indices. That is the
-     * control that is actually wanted, and it is the one axis that works the
-     * same way for every library here including a binary archive.
+     * data: same code, same instruction stream, same indices. That's the
+     * control we actually want, and it's the one axis that works the same
+     * way for every library here, a binary archive included.
      *
      * The call is left in and set to 0 rather than removed, so that the
      * pointer indirection is present in both arms and cannot be the thing

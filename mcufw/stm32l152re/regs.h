@@ -6,7 +6,7 @@
  * sync with a datasheet. Everything here is from RM0038 rev 16 and the
  * ARMv7-M architecture reference, and every definition is used.
  *
- * A part that genuinely needs a vendor HAL may of course bring one -- the
+ * A part that genuinely needs a vendor HAL may of course bring one - the
  * board contract says nothing about how the board file gets its registers.
  * See docs/PORTING.md.
  */
@@ -62,7 +62,7 @@ static inline void sysreset(void) {
 
 /* ---- FLASH (0x40023C00) ---- */
 #define FLASH_ACR REG(0x40023C00u)
-#define FLASH_ACR_LATENCY (1u << 0)      /* 0 or 1 wait states -- that is the range */
+#define FLASH_ACR_LATENCY (1u << 0)      /* 0 or 1 wait states - that is the range */
 #define FLASH_ACR_PRFTEN  (1u << 1)      /* prefetch; requires ACC64                */
 #define FLASH_ACR_ACC64   (1u << 2)      /* 64-bit flash read access                */
 #define FLASH_ACR_SLEEP_PD (1u << 3)
@@ -98,7 +98,7 @@ static inline void sysreset(void) {
 #define USART1_CR1  REG(0x4001380Cu)
 #define RCC_APB2ENR_USART1 (1u << 14)
 
-/* CRCEN is AHB bit 12. Needed by ST's STM32 Cryptographic Library -- its
+/* CRCEN is AHB bit 12. Needed by ST's STM32 Cryptographic Library - its
  * release notes say "CRC peripheral is used by STM32 cryptographic library",
  * and without the clock it runs, returns success, and computes the wrong
  * answer. That one line is the entire documentation of it. */

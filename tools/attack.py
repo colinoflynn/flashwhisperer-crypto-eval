@@ -1,33 +1,30 @@
-"""Recover the key from captures taken by this bench. THE PART THAT DECIDES.
+"""Recover the key from captures taken by this bench. The part that decides.
 
     python tools/attack.py results/stm32l152re/*.npz --line-shifts 3,1
     python tools/attack.py results/stm32f429zi/*.npz --line-shifts 4,2
 
-A STATISTIC IS NOT A CHANNEL. tools/capture.py reports a spread; a spread
-can be large and yield nothing. This reports whether the exact master key
-falls out, and at how many traces.
+A statistic is not a channel. tools/capture.py reports a spread, and a
+spread can be large and yield nothing. This reports whether the exact
+master key falls out, and at how many traces.
 
-THIS FILE IS AN ADAPTER AND NOTHING MORE, which is the point. The sweep
-over trace counts, pair models and table geometry, and the control gate
-that decides whether the run may be quoted, are all
-`flashattack.sweep` -- because none of that is a property of this bench.
-What stays here is only what is: how to read this repository's .npz
-metadata, which captures are controls, and the victim's compiled-in key.
+It's an adapter and nothing more. The sweep over trace counts, pair models
+and table geometry, and the control gate deciding whether the run may be
+quoted, are all `flashattack.sweep`, since none of that is a property of
+this bench. What stays here is only what is: how to read this repository's
+.npz metadata, which captures are controls, and the victim's compiled-in
+key.
 
-An earlier version of this script reimplemented the sweep, and
-reimplemented the 24-pair model that `engine.recover(pairs="intra-column")`
-already had. Both are gone.
-
-WHAT YOU STILL HAVE TO TELL IT, because nothing on the chip reports it:
+You still have to tell it two things, because nothing on the chip reports
+them:
 
   --line-shifts   log2 of the flash read width in BYTES divided by the
                   entry size of the table the LAST ROUND reads. On an
-                  8-byte read that is 3 for a byte S-box and 1 for a
-                  4-byte word table; on a 16-byte read, 4 and 2. Which of
-                  the two a configuration uses is a property of the
-                  library, so pass both and let the sweep decide -- the
-                  wrong one returns a clean null that reads exactly like
-                  a part that does not leak.
+                  8-byte read that's 3 for a byte S-box and 1 for a 4-byte
+                  word table; on a 16-byte read, 4 and 2. Which of the two
+                  a configuration uses is a property of the library, so
+                  pass both and let the sweep decide. The wrong one
+                  returns a clean null that reads exactly like a part that
+                  doesn't leak.
 
   --line-offs     the table's offset within its row. `auto` takes it from
                   the address the DEVICE reported, which is right for a
@@ -59,7 +56,7 @@ from flashattack import Capture                               # noqa: E402
 from flashattack.sweep import (controls_clean, default_geometries,  # noqa: E402
                                ladder)
 
-#: The victim's compiled-in key -- instrumentation/victim/src/ss_main.c.
+#: The victim's compiled-in key - instrumentation/victim/src/ss_main.c.
 #: Used only to SCORE a recovery; the device never receives it.
 KEY = bytes.fromhex("2b7e151628aed2a6abf7158809cf4f3c")
 
@@ -71,7 +68,7 @@ def load(path: pathlib.Path):
     cyc = d["cyc"].astype(np.float64)
 
     # A build whose on-chip count is bit-exactly constant has nothing to
-    # recover from, and so does a tables-in-RAM twin. Both are CONTROLS:
+    # recover from, and nor does a tables-in-RAM twin. Both are CONTROLS:
     # scored with the identical call, and if one of them scores, the run
     # is manufacturing and no row of it may be quoted.
     is_control = (len(np.unique(cyc)) == 1) or meta.get("tables_in_ram", False)
@@ -144,7 +141,7 @@ def main(argv=None):
     for k in sorted(ladders):
         lad, meta, sd = ladders[k], metas[k], sds[k]
         if not lad.trials:
-            note = "constant -- nothing to recover from"
+            note = "constant - nothing to recover from"
         elif lad.exact_at is not None:
             b = lad.best
             note = "EXACT at n=%d (%s)" % (b.n, b.geometry.label)

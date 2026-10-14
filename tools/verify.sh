@@ -19,7 +19,7 @@
 #     built without it cannot be given one. `make addr` reading address 0
 #     for every slot is the symptom; this script will not see it.
 #   * The configuration headers in eval/lib/*/. They are OURS and are meant
-#     to differ from upstream -- that is the whole mechanism.
+#     to differ from upstream - that is the whole mechanism.
 #   * Anything about eval/lib/refsbox/, whose source is in this repository
 #     on purpose. `git status` is its check.
 set -euo pipefail
@@ -33,7 +33,7 @@ while read -r name url pin version; do
     dir="$ROOT/libs/$name"
 
     if [ ! -e "$dir/.git" ]; then
-        echo "  MISSING  $name -- run ./libs/fetch.sh"
+        echo "  MISSING  $name - run ./libs/fetch.sh"
         fail=1
         continue
     fi
@@ -70,6 +70,6 @@ echo
 if [ "$fail" = 0 ]; then
     echo "  OK: no library source is modified, and every pin matches."
 else
-    echo "  NOT OK -- see above." >&2
+    echo "  NOT OK - see above." >&2
 fi
 exit $fail

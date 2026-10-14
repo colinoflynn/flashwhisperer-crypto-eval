@@ -7,7 +7,7 @@
  * TWO COPY LOOPS. `.data` as usual, and then the AES table section, which
  * the RAM variant places in RAM with its load address still in flash. When
  * the tables are left in flash the two addresses are equal and the second
- * loop does nothing -- which is how one startup serves both variants, and
+ * loop does nothing - which is how one startup serves both variants, and
  * why no build-time switch reaches this file.
  */
 #include <stdint.h>

@@ -4,7 +4,7 @@
  * twenty-five registers, and writing them out with their reference-manual
  * addresses is smaller than vendoring a CMSIS tree and leaves nothing to
  * keep in sync. Everything is from RM0090 rev 21 and the ARMv7-M
- * architecture reference. A part that wants a vendor HAL may bring one --
+ * architecture reference. A part that wants a vendor HAL may bring one -
  * the board contract says nothing about how a board file gets its
  * registers. See docs/PORTING.md.
  */
@@ -23,7 +23,7 @@
 #define SCB_AIRCR  REG(0xE000ED0Cu)
 #define SCB_CCR    REG(0xE000ED14u)
 
-/* The DWT cycle counter. Counts UP over a full 32 bits, unlike SysTick --
+/* The DWT cycle counter. Counts UP over a full 32 bits, unlike SysTick -
  * which is the reason ssb_cyc_delta is a board hook and not an assumption.
  *
  * TWO SILENT FAILURES, both of which look like a constant-time result:
@@ -60,7 +60,7 @@ static inline void irq_on(void)  { __asm volatile("cpsie i" ::: "memory"); }
 
 /* ---- FLASH (0x40023C00). THE ART ACCELERATOR. ----
  * RM0090 3.5.1. Unlike a part with a single LATENCY bit, this one has a
- * four-bit field AND two caches with explicit reset bits -- and the reset
+ * four-bit field AND two caches with explicit reset bits - and the reset
  * bits may only be written while the corresponding cache is DISABLED.
  * Writing the enable bit without the reset dance leaves stale lines, which
  * is a measurement rather than an error. */

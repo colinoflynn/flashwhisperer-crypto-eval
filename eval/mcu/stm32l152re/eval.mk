@@ -14,7 +14,7 @@
 # board file with two readers.
 
 # The flash read width, as log2 of BYTES. NOT reported by the device and
-# not discoverable from it -- a per-part property that has to be measured
+# not discoverable from it - a per-part property that has to be measured
 # once and then written down.
 #
 # It is what tools/attack.py needs for --line-shift, and getting it wrong
@@ -35,7 +35,7 @@ EVAL_LINE_SHIFT = 3
 #                                    state. THE ONLY LEGAL CONFIGURATION AT
 #                                    32 MHz, and what the board boots into.
 #   0x05  ACC64 | LATENCY            prefetch OFF, one wait state.
-#   0x06  ACC64 | PRFTEN             zero wait states -- REFUSED by the
+#   0x06  ACC64 | PRFTEN             zero wait states - REFUSED by the
 #                                    board at 32 MHz, and the refusal is
 #                                    the point: SS_V_SET_ACR replies with
 #                                    the readback, so a sweep records that

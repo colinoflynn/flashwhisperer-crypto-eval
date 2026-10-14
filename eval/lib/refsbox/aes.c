@@ -6,7 +6,7 @@
 
 /* RAM copies of the tables (.bss -> SRAM) and the active-table pointers used by
  * the timed encrypt paths. aes_use_ram() flips between flash and RAM tables so
- * the same firmware can measure both -- the tables-in-RAM control. */
+ * the same firmware can measure both - the tables-in-RAM control. */
 static uint8_t  sbox_ram[256];
 static uint32_t te0_ram[256], te1_ram[256], te2_ram[256], te3_ram[256];
 static const uint8_t  *SB = SBOX;
@@ -94,7 +94,7 @@ void aes_sbox_encrypt(const uint8_t in[16], uint8_t out[16], const uint32_t w[44
 }
 
 /* Same cipher, but the four S-box reads in each column are issued in the order
- * byte1, byte0, byte3, byte2 -- so the first<->last collision now exposes the
+ * byte1, byte0, byte3, byte2 - so the first<->last collision now exposes the
  * (row1,row2) byte pair. Models a different compiler/implementation; used to
  * recover the last-round-key bytes the natural order leaves hidden. */
 static inline uint32_t subword_alt(uint32_t x) {
@@ -138,7 +138,7 @@ void aes_ttable_encrypt_nr(const uint8_t in[16], uint8_t out[16], const uint32_t
     if (nr >= 10) {
         /* Final round, staged through t[]. Writing s[c] in place here let
          * columns 1-3 read state that earlier iterations had already
-         * overwritten, so this computed the WRONG cipher -- FIPS-197 C.1 came
+         * overwritten, so this computed the WRONG cipher - FIPS-197 C.1 came
          * back 69c4e0d86a7b0476d8cd46b37037c2a8. The staging changes no lookup
          * address, so the access pattern under measurement is unchanged. */
         for (int c = 0; c < 4; c++)
@@ -159,7 +159,7 @@ static inline uint32_t ror32(uint32_t x, int n);   /* defined below */
 
 /* Compact single-table T-table for rounds 1..9, but a STANDARD within-column
  * S-box final round (SubBytes on each column, then ShiftRows, then AddRoundKey)
- * -- the common way real T-table code does the last round. That final round
+ * - the common way real T-table code does the last round. That final round
  * reads within-column bytes, which collide and leak, so the last-round attack
  * applies. `alt` picks the final-round S-box read order (row0,row3 vs row1,row2)
  * to expose both halves of k10. */
@@ -188,13 +188,13 @@ void aes_ttw_encrypt(const uint8_t in[16], uint8_t out[16], const uint32_t w[44]
 
 /* Compact single-table T-table: one 1 KB Te0 + rotations (Te1=ror8, Te2=ror16,
  * Te3=ror24). ALL 16 lookups per round hit one table, so same-line collisions
- * return -- the space-saving variant many real implementations use. */
+ * return - the space-saving variant many real implementations use. */
 static inline uint32_t ror32(uint32_t x, int n) { return (x >> n) | (x << (32 - n)); }
 
 /* The ONE divergence from fw_g4/aes.c: a build-time halfword pad, inert at the
  * default of 0.  It exists to move this function's final-round loop by an odd
  * multiple of 2 bytes relative to the 8-byte flash read word, which the linker
- * cannot do -- ARM's `LDR (literal)` is based on Align(PC,4), so relocating
+ * cannot do - ARM's `LDR (literal)` is based on Align(PC,4), so relocating
  * Thumb code by 2 desynchronises every literal pool (see link.ld).  Inserting
  * the halfwords in the source instead lets the assembler re-lay the pools, so
  * the build stays correct while the loop moves.  Nothing else in the file is
@@ -225,7 +225,7 @@ void aes_ttable1_encrypt_nr(const uint8_t in[16], uint8_t out[16], const uint32_
     if (nr >= 10) {
         /* Final round, staged through t[]. Writing s[c] in place here let
          * columns 1-3 read state that earlier iterations had already
-         * overwritten, so this computed the WRONG cipher -- FIPS-197 C.1 came
+         * overwritten, so this computed the WRONG cipher - FIPS-197 C.1 came
          * back 69c4e0d86a7b0476d8cd46b37037c2a8. The staging changes no lookup
          * address, so the access pattern under measurement is unchanged. */
         for (int c = 0; c < 4; c++)

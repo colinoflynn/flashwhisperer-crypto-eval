@@ -3,28 +3,27 @@
     python tools/capture.py --mcu stm32l152re --variant refsbox-sbox-ram0-vcp-... \\
                             --port COM3 --probe <serial> -n 20000
 
-WHY IT READS THE CONFIGURATION OFF THE DEVICE rather than parsing the
-directory name: the directory name is what someone MEANT to build, and
-SS_V_LIBINFO is what is RUNNING. Those have disagreed before -- a rig
-default flipped and fw.bin changed meaning without changing name. The saved
-.npz records the device's answer, not the path.
+It reads the configuration off the device rather than parsing the directory
+name, since the directory name is what someone MEANT to build and
+SS_V_LIBINFO is what is RUNNING. Those have disagreed before: a rig default
+flipped and fw.bin changed meaning without changing name. So the saved .npz
+records the device's answer, not the path.
 
-WHAT IT CHECKS BEFORE BELIEVING ANY NUMBER, and it refuses to write a file
-that fails any of them:
+It refuses to write a file that fails any of these:
 
   * every ciphertext against a reference AES under the victim's compiled-in
-    key. This is the check that matters most and the one a framing or
+    key. This is the check that matters most, and the one a framing or
     length check would not do. In the rig this came from, a library framed
     correctly, returned AES_SUCCESS on every call, and produced a
     deterministic WRONG ciphertext for want of a peripheral clock nothing
-    documents -- 60 000 traces of a mis-driven cipher would otherwise have
+    documents. 60 000 traces of a mis-driven cipher would otherwise have
     been recorded as a measurement;
   * that the device reports a cycle counter before trusting a cycle column;
-  * that the table address the device reports is not zero when the build
-    was supposed to have tables in flash. A trace count quoted without the
+  * that the table address the device reports isn't zero when the build was
+    supposed to have tables in flash. A trace count quoted without the
     table's address is under-specified, so the address goes in the file.
 
-A STATISTIC IS NOT A CHANNEL. This reports spreads; tools/attack.py runs
+A statistic is not a channel. This reports spreads; tools/attack.py runs
 the recovery.
 """
 from __future__ import annotations
@@ -46,7 +45,7 @@ sys.path.insert(0, str(_ROOT / "flashwhisperer"))
 from mcueval import Victim, proto as P            # noqa: E402
 from flashattack import aesref                     # noqa: E402
 
-#: The victim's compiled-in key -- instrumentation/victim/src/ss_main.c.
+#: The victim's compiled-in key - instrumentation/victim/src/ss_main.c.
 #: Used only to SCORE and to content-check; the device never receives it.
 KEY = bytes.fromhex("2b7e151628aed2a6abf7158809cf4f3c")
 
@@ -55,10 +54,10 @@ def port_for_probe(probe: str) -> str:
     """Resolve the serial port from the DEBUG PROBE'S SERIAL NUMBER, which
     is the only stable handle a board has.
 
-    COM numbers and drive letters are assigned by the host and move on
-    replug. This is not a theoretical concern: the registry this repository
-    grew out of recorded COM3 for the part used to bring this tool up, the
-    board was actually on COM53, and the stale value survived even that
+    COM numbers and drive letters get assigned by the host and move on
+    replug. Not a theoretical concern: the registry this repository grew
+    out of recorded COM3 for the part used to bring this tool up, the board
+    was actually on COM53, and the stale value survived even that
     registry's own verifying accessor. Two boards of the same type are
     distinguishable ONLY by probe serial, so a copy or a capture addressed
     by anything else can land on the wrong board.
@@ -83,7 +82,7 @@ def port_for_probe(probe: str) -> str:
 def flash(probe: str, target: str, binary: pathlib.Path) -> None:
     """pyocd over SWD. Drag-and-drop to the ST-LINK volume also works and is
     the historical path, but it is SILENT ON FAILURE and cannot reset a
-    wedged board without a reflash -- and on a host with two boards of the
+    wedged board without a reflash - and on a host with two boards of the
     same type a copy to a bare drive letter can land on the wrong one."""
     # `python -m pyocd`, not the `pyocd` console script: the script is not
     # on PATH in every environment that has the package, and the failure is
@@ -119,7 +118,7 @@ def capture(port: str, n: int, seed: int, baud: int, want_cyc: bool,
             # SS_V_SET_ACR replies with the READBACK, never the requested
             # value: the board layer refuses a configuration this clock
             # cannot run, and this is how a caller finds out. Refusing to
-            # continue on a refusal matters -- a sweep that silently
+            # continue on a refusal matters - a sweep that silently
             # captured the old setting under the new name would file every
             # point of the sweep under the wrong label.
             got = v.set_acr(acr)
@@ -134,7 +133,7 @@ def capture(port: str, n: int, seed: int, baud: int, want_cyc: bool,
         if want_cyc and not ident.reports_cyc:
             raise SystemExit(
                 "this build reports no cycle counter, so there is no on-chip\n"
-                "timing to capture. That is a real answer -- build with\n"
+                "timing to capture. That is a real answer - build with\n"
                 "TIMING=systick, or measure it with the off-chip instrument.")
 
         cyc = np.zeros(n, dtype=np.uint32)
@@ -230,15 +229,15 @@ def main(argv=None):
 
         # A COLUMN OF ZEROS IS A DEAD COUNTER, NOT A CONSTANT-TIME CIPHER,
         # and the two look identical in every summary statistic. Nothing
-        # real encrypts a block in zero cycles, so this is cheap to tell
-        # apart -- and worth telling apart loudly, because the first DWT
-        # build brought up here produced exactly this while its own IDENT
+        # real encrypts a block in zero cycles, so it's cheap to tell
+        # apart, and worth telling apart loudly: the first DWT build
+        # brought up here produced exactly this while its own IDENT
         # reported a working counter. The counter had been armed at boot
         # and then switched off by the debug probe disconnecting.
         if uniq == 1 and int(cyc[0]) == 0:
             raise SystemExit(
                 "EVERY CYCLE COUNT IS ZERO. That is a dead counter, not a\n"
-                "constant-time cipher -- nothing encrypts a block in zero\n"
+                "constant-time cipher - nothing encrypts a block in zero\n"
                 "cycles. On Cortex-M this is usually DWT: DEMCR.TRCENA is\n"
                 "cleared by the debug probe when it disconnects AFTER the\n"
                 "board booted, so a counter armed in board init is armed\n"

@@ -1,7 +1,7 @@
 /* STM32L152RE board layer. The whole part-specific half of a victim.
  *
  * Cortex-M3 at 32 MHz, one-bit LATENCY field, no cache of any kind: the
- * FLOOR CASE, and a good first port because nothing here can hide behind a
+ * FLOOR CASE, and a good first port since nothing here can hide behind a
  * cache. Everything part-specific is in this file; the protocol loop
  * (instrumentation/victim/src/ss_victim.c) and the cipher
  * (eval/lib/<name>/provider.c) mention no part at all.
@@ -29,9 +29,10 @@
 /* BRR is 12.4 fixed point when OVER8 = 0, so the register value is fck/baud
  * rounded. USARTDIV < 1 is not representable, which is what the assertion
  * catches: at 32 MHz the ceiling without OVER8 is 2 Mbaud. Going beyond
- * needs CR1.OVER8 and is deliberately NOT done -- the oversampling change
- * moves the receiver's sampling point, and that is a measurement-affecting
- * knob that wants a control rather than a silent default. */
+ * needs CR1.OVER8 and is deliberately NOT done, since the oversampling
+ * change moves the receiver's sampling point, and that's a
+ * measurement-affecting knob that wants a control rather than a silent
+ * default. */
 #define SS_BRR ((SS_CLK_HZ + (SS_BAUD / 2u)) / SS_BAUD)
 #if SS_BRR < 16
 #error "SS_BAUD is too high for SS_CLK_MHZ without CR1.OVER8"
@@ -61,7 +62,7 @@ const char *ssb_name(void) { return "stm32l152re"; }
  * RM0038 rev 16, 3.9.1: LATENCY = 1 requires ACC64 = 1, PRFTEN = 1 requires
  * ACC64 = 1, and clearing ACC64 requires clearing both first. Going up,
  * ACC64 first and its dependants after; going down, the dependants first.
- * Each transition is fenced -- this register decides how the very next
+ * Each transition is fenced, since this register decides how the very next
  * instruction fetch is served.
  *
  * REFUSE what this clock cannot run, rather than execute the next fetch
@@ -112,9 +113,9 @@ void ssb_monitors_reset(void) {}
 void ssb_monitors_read(uint32_t *hit, uint32_t *miss) { *hit = 0u; *miss = 0u; }
 
 /* ---- clock ------------------------------------------------------------
- * 32 MHz is the default and it is the point: at 16 MHz in voltage range 1 a
- * wait state is OVER-programmed -- legal, but not what the part needs -- so
- * a LATENCY = 1 result there is open to "you measured a configuration nobody
+ * 32 MHz is the default and that matters: at 16 MHz in voltage range 1 a
+ * wait state is OVER-programmed (legal, but not what the part needs), so a
+ * LATENCY = 1 result there is open to "you measured a configuration nobody
  * ships". At 32 MHz RM0038's table makes one wait state MANDATORY, and
  * 32 MHz is the fastest this silicon goes.
  */
@@ -143,7 +144,7 @@ static void clock_init(void)
     RCC_CFGR = (RCC_CFGR & ~3u) | 3u;                  /* SW = PLL */
     while (((RCC_CFGR >> 2) & 3u) != 3u) {}
 #elif SS_CLK_MHZ != 16
-#  error "SS_CLK_MHZ must be 16 or 32 -- the part's two in-spec points here"
+#  error "SS_CLK_MHZ must be 16 or 32 - the part's two in-spec points here"
 #endif
 }
 
@@ -203,7 +204,7 @@ static void trig_init(void)
  *
  * THE DOWN-COUNT IS WHY ssb_cyc_delta EXISTS. This was the first part
  * ported, and a caller assuming `second - first` would have produced large
- * positive garbage rather than an error -- which is trap 3 in ss_board.h.
+ * positive garbage rather than an error. Trap 3 in ss_board.h.
  */
 #ifdef SS_TIMING_SYSTICK
 int      ssb_has_cyc(void)       { return 1; }

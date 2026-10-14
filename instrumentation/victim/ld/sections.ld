@@ -1,21 +1,21 @@
 /* The section layout, SHARED BY EVERY PART AND EVERY LIBRARY.
  *
- * Three files make one linker script, and the split is not arbitrary:
+ * Three files make one linker script, split along what each half owns:
  *
- *   mcufw/<part>/memory.ld      MEMORY, ENTRY, _estack   -- a PART property
- *   link_flash.ld / link_ram.ld one REGION_ALIAS line    -- the axis
- *   this file                   the SECTIONS block       -- shared
+ *   mcufw/<part>/memory.ld      MEMORY, ENTRY, _estack   - a PART property
+ *   link_flash.ld / link_ram.ld one REGION_ALIAS line    - the axis
+ *   this file                   the SECTIONS block       - shared
  *   eval/lib/<name>/tab_[tsd].ld  which input sections hold the tables
- *                                                        -- a LIBRARY property
+ *                                                        - a LIBRARY property
  *
  * REGION_ALIAS MUST COME AFTER `MEMORY` AND BEFORE THE SECTIONS THAT USE THE
  * ALIAS, which is why the first three are three files rather than two. `ld`
  * rejects the other order with "memory region `FLASH' for alias `TABS' does
  * not exist".
  *
- * WHY THE TABLES ARE COLLECTED BY SECTION NAME. Most libraries' AES tables
- * are file-static and at least one ships inside a prebuilt archive, so none
- * of them can be moved -- or even addressed -- from C. Compiled with
+ * The tables get collected BY SECTION NAME. Most libraries' AES tables are
+ * file-static and at least one ships inside a prebuilt archive, so none of
+ * them can be moved, or even addressed, from C. Compiled with
  * -fdata-sections, each table gets its own input section named after its
  * symbol, and collecting those gives one residence axis that works
  * identically for a source library and a binary one, moving ONLY the data:
@@ -58,7 +58,7 @@ SECTIONS
     _tabS_end = .;
 
     /* Decryption tables. Present only if something references them, which
-       an encrypt-only build does not -- so normally empty, reported as 0. */
+       an encrypt-only build does not - so normally empty, reported as 0. */
     _tabD = .;
     INCLUDE tab_d.ld
     . = ALIGN(4);

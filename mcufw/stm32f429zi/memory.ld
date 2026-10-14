@@ -5,7 +5,7 @@
  * is deliberate: CCM is not reachable by every bus master and, more to the
  * point here, putting the RAM table twin somewhere with a different access
  * path would make the twin differ from the flash arm in more than the
- * table's residence -- which is the one thing the control may not do.
+ * table's residence - which is the one thing the control may not do.
  */
 ENTRY(Reset_Handler)
 

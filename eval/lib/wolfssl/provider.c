@@ -2,7 +2,7 @@
  * wc_AesEncryptDirect for one block.
  *
  * Nothing here configures wolfSSL. Its one table axis is its OWN option,
- * set through WOLFSSL_USER_SETTINGS from lib.mk -- see user_settings.h.
+ * set through WOLFSSL_USER_SETTINGS from lib.mk - see user_settings.h.
  */
 #include <stdint.h>
 #include "ss_victim.h"
@@ -29,10 +29,10 @@ void prov_libinfo(ss_libinfo_t *o)
     o->lib = SS_LIB_WOLFSSL;
     o->cfg = ss_common_cfg();
     /* wolfSSL HAS NO ROM/RAM SWITCH: Te and Td are `static const` and live
-     * in flash in EVERY build, so there is no equivalent of Mbed-TLS's
-     * ROM_TABLES bit and the link-time twin is the only residence axis it
-     * has. WOLFSSL_AES_SMALL_TABLES defaults OFF -- wolfSSL's own options
-     * comment in aes.c says so -- and turning it on replaces the four 1 KB
+     * in flash in EVERY build, so there's no equivalent of Mbed-TLS's
+     * ROM_TABLES bit, and the link-time twin is the only residence axis it
+     * has. WOLFSSL_AES_SMALL_TABLES defaults OFF (wolfSSL's own options
+     * comment in aes.c says so), and turning it on replaces the four 1 KB
      * word tables with a 256-byte Tsbox. */
 #if defined(WOLFSSL_AES_SMALL_TABLES)
     o->cfg |= SS_LC_FEWER;

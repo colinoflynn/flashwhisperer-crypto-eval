@@ -1,7 +1,7 @@
 """Mirror of instrumentation/protocol/victim_proto.h.
 
 The header is the one definition; this is the host's copy of it, and
-tests/test_proto.py parses the header and checks the two agree -- no
+tests/test_proto.py parses the header and checks the two agree - no
 hardware, no toolchain. That test exists because the two drifting apart is
 silent: a wrong opcode value reads as a dead victim, and a wrong payload
 length reads as a desync.
@@ -36,7 +36,7 @@ EXCHANGE = {
     V_LIBINFO:  (0, LIBINFO_LEN),
 }
 
-# SS_VI_* -- the IDENT flags
+# SS_VI_* - the IDENT flags
 VI_TABLES_RAM = 0x01
 VI_REPORTS_CYC = 0x02
 VI_HAS_TRIGGER = 0x04
@@ -55,7 +55,7 @@ LIB_NAMES = {
     LIB_STCRYPT: "stcrypt",
 }
 
-# SS_LC_* -- the configuration bitmap
+# SS_LC_* - the configuration bitmap
 LC_RAMTAB = 0x01
 LC_ROMTAB = 0x02
 LC_FEWER = 0x04

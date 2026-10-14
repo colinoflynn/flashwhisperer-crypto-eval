@@ -1,6 +1,6 @@
 /* Mbed-TLS configuration for the sstimer library victim: AES only, nothing
  * else. Passed with -DMBEDTLS_CONFIG_FILE, which is Mbed-TLS's own documented
- * mechanism -- no library source is touched.
+ * mechanism - no library source is touched.
  *
  * THE TWO AXES HERE ARE MBED-TLS'S OWN OPTIONS, AND THEIR DEFAULTS MATTER.
  *

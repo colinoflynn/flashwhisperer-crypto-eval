@@ -2,14 +2,15 @@
 
 This test exists because the two drifting apart is SILENT: a wrong opcode
 value reads from the host as a dead victim, and a wrong payload length
-reads as a desync -- both of which look like a wiring problem and send you
+reads as a desync - both of which look like a wiring problem and send you
 to the bench instead of to the diff.
 
-WHAT THIS DOES NOT COVER:
-  * Whether the FIRMWARE agrees with the header. It includes it, so it does
-    by construction -- but a provider that writes a response by hand rather
-    than through the helpers could still disagree, and nothing here sees
-    that. The ciphertext check in tools/capture.py is what catches it.
+What this does NOT cover:
+  * Whether the FIRMWARE agrees with the header. It includes it, so it
+    does by construction, but a provider that writes a response by hand
+    rather than through the helpers could still disagree and nothing here
+    sees that. The ciphertext check in tools/capture.py is what catches
+    it.
   * The structure of the IDENT and LIBINFO payloads beyond their lengths.
     Field offsets are asserted in the header's comment and parsed in
     victim.py; they are checked against a live device, not here.
@@ -33,13 +34,13 @@ from mcueval import proto as P            # noqa: E402
 
 @pytest.fixture(scope="module")
 def defines():
-    assert _HEADER.is_file(), f"{_HEADER} missing -- did the tree move?"
+    assert _HEADER.is_file(), f"{_HEADER} missing - did the tree move?"
     text = _HEADER.read_text()
     out = {}
     for m in re.finditer(r"^#define\s+(SS_\w+)\s+(0x[0-9A-Fa-f]+|\d+)u?\s*(?:/\*|$)",
                          text, re.M):
         out[m.group(1)] = int(m.group(2), 0)
-    assert out, "parsed no #defines out of the header -- the regex is stale"
+    assert out, "parsed no #defines out of the header - the regex is stale"
     return out
 
 

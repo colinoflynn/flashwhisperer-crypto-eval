@@ -1,4 +1,4 @@
-# mcu-crypto-eval -- top level.
+# mcu-crypto-eval - top level.
 #
 #   make list                       what parts and libraries there are
 #   make fetch                      the pinned library checkouts

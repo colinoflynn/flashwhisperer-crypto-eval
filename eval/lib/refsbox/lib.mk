@@ -1,4 +1,4 @@
-# DESC: this project's own byte S-box AES -- the control, source in-tree
+# DESC: this project's own byte S-box AES - the control, source in-tree
 # refsbox.
 #
 # The only entry under eval/lib/ with no counterpart in libs/, because it is

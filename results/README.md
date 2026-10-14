@@ -1,13 +1,15 @@
 # Captures
 
-One `.npz` per (part, configuration), under `results/<part>/`. **The data
-itself is not tracked by git** — `git status` will not tell you a capture
-is missing, and it is not meant to.
+*🤖WARNING🤖: This file LLM generated and may read oddly. Will eventually be human-edited for that real-life touch and typos.*
 
-Each file holds `pt`, `ct`, `cyc` and a `meta` JSON blob, and the metadata
-is **what the device reported**, not what the directory name implies. Those
-have disagreed before: a build default flipped and a firmware image changed
-meaning without changing name.
+One `.npz` per (part, configuration), under `results/<part>/`. The data
+itself is not tracked by git - `git status` will not tell you a capture is
+missing, and it isn't meant to.
+
+Each file holds `pt`, `ct`, `cyc` and a `meta` JSON blob, and the
+metadata is what the *device* reported, not what the directory name
+implies. Those have disagreed before: a build default flipped and a
+firmware image changed meaning without changing name.
 
 ```python
 import json, numpy as np
@@ -18,12 +20,13 @@ meta["table_addr"], meta["lib"], meta["cfg_str"], meta["acr"]
 
 ## Why the table address is in every file
 
-**A trace count quoted without it is under-specified.** The same firmware
-at three link-time accidents has needed 6 250, 12 500 and 25 000 traces for
-the same recovery. The address in the file is the one the firmware read off
-itself, which it knows better than a human copying it out of a `.map`.
+A trace count quoted without it is under-specified. The same firmware at
+three link-time accidents has needed 6 250, 12 500 and 25 000 traces for
+the same recovery. The address in the file is the one the firmware read
+off itself, which it knows better than a human copying it out of a
+`.map`.
 
-An address of **0 means no table in flash**, which is a real answer: stock
+An address of 0 means no table in flash, which is a real answer: stock
 Mbed-TLS generates its tables into `.bss` at run time and reports zero for
 all three slots.
 
@@ -34,18 +37,17 @@ file existing means they passed:
 
 * every ciphertext matches a reference AES under the victim's compiled-in
   key;
-* the cycle column is not all zeros (a dead counter and a constant-time
+* the cycle column isn't all zeros (a dead counter and a constant-time
   cipher are identical in every summary statistic, and nothing encrypts a
   block in zero cycles);
-* if an accelerator word was requested, the device's **readback** matched
-  it — a refusal aborts rather than filing the old setting under the new
-  name.
+* if an accelerator word was requested, the device's readback matched it -
+  a refusal aborts rather than filing the old setting under the new name.
 
 ## Reading a result
 
-**A statistic is not a channel.** `sd` is not the answer; the answer is
-whether `tools/attack.py` recovers the key and at how many traces. A large
-spread can yield nothing, and a configuration that yields nothing is only
+A statistic is not a channel. `sd` isn't the answer; the answer is whether
+`tools/attack.py` recovers the key and at how many traces. A large spread
+can yield nothing, and a configuration that yields nothing is only
 interesting once its RAM twin has shown the instrument was working.
 
 Every flash-table arm here has a twin with the tables relocated to RAM.

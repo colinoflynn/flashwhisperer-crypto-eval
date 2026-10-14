@@ -1,27 +1,27 @@
 /* The victim wire protocol: the one definition, mirrored by the host in
  * instrumentation/host/mcueval/proto.py and checked against it by
- * instrumentation/host/tests/test_proto.py -- no hardware, no toolchain.
+ * instrumentation/host/tests/test_proto.py (no hardware, no toolchain).
  *
- * NO ASCII, AND THAT IS A MEASUREMENT DECISION RATHER THAN A STYLE ONE.
- * ChipWhisperer's simpleserial was the starting point and was dropped for one
- * measured reason: its `hex_decode` is a three-way if/else chain on each
- * character -- '0'-'9' takes the first branch, 'a'-'f' the third, and a host
- * sending %02x therefore makes the PARSE DURATION a function of the
- * plaintext. In the arm that has no trigger and times the UART edges, that
- * term sits INSIDE the measured interval and is correlated with the plaintext
- * in roughly the shape a first-round attack looks for. It would manufacture a
- * channel. Raw binary has no such term.
+ * NO ASCII, for a measured reason rather than a stylistic one.
+ * ChipWhisperer's simpleserial was the starting point and got dropped
+ * because its `hex_decode` is a three-way if/else chain on each character:
+ * '0'-'9' takes the first branch, 'a'-'f' the third, so a host sending %02x
+ * makes the PARSE DURATION a function of the plaintext. In the arm that has
+ * no trigger and times the UART edges, that term sits INSIDE the measured
+ * interval and correlates with the plaintext in roughly the shape a
+ * first-round attack looks for. It would manufacture a channel. Raw binary
+ * has no such term.
  *
  * EVERY OPCODE'S PAYLOAD LENGTH IS DERIVABLE FROM THE OPCODE ALONE. There is
  * no frame marker and no length field, so after a reset or a lost byte the
  * two sides may disagree about where a command starts. A driver resyncs by
- * sending SS_V_ENC one byte at a time until a response appears: whatever that
- * response answered, the victim is then at a command boundary. The filler has
- * to be a VALID opcode so that wherever it lands it starts a command the
- * victim will finish -- which is why it is SS_V_ENC and not zero.
+ * sending SS_V_ENC one byte at a time until a response appears: whatever
+ * that response answered, the victim is then at a command boundary. The
+ * filler has to be a VALID opcode so that wherever it lands it starts a
+ * command the victim will finish, which is why it's SS_V_ENC and not zero.
  *
  * NO BANNER ON BOOT, for the same reason: an unsolicited byte stream after
- * reset lands in the middle of a resync and is decoded as a response.
+ * reset lands in the middle of a resync and gets decoded as a response.
  */
 #ifndef MCUEVAL_VICTIM_PROTO_H
 #define MCUEVAL_VICTIM_PROTO_H
@@ -64,7 +64,7 @@
  * than a human copying it out of a .map.
  *
  * Address 0 means NO TABLE IN FLASH, which is a real answer rather than a
- * missing one -- stock Mbed-TLS generates its tables into .bss at run time.
+ * missing one. Stock Mbed-TLS generates its tables into .bss at run time.
  */
 #define SS_VI_TABLES_RAM     0x01u   /* the mandatory RAM twin build        */
 #define SS_VI_REPORTS_CYC    0x02u   /* SS_V_ENC_CYC is implemented         */
@@ -76,9 +76,9 @@
  *     1   u8  configuration bitmap, SS_LC_*
  *     2   u8  how many of the three table slots are populated
  *     3   u8  the library's own build byte, 0 if it has none
- *     4   u32 table slot 0 -- the byte S-box
- *     8   u32 table slot 1 -- the word T-tables
- *    12   u32 table slot 2 -- decryption tables
+ *     4   u32 table slot 0: the byte S-box
+ *     8   u32 table slot 1: the word T-tables
+ *    12   u32 table slot 2: decryption tables
  *    16   u32 the encrypt entry point
  *    20   u32 the library's own version, (major<<16)|(minor<<8)|patch
  */
@@ -92,7 +92,7 @@
 #define SS_LC_RAMTAB         0x01u
 /* Mbed-TLS MBEDTLS_AES_ROM_TABLES. DEFAULT OFF, and off IS stock Mbed-TLS:
  * the tables are plain `static` arrays in .bss generated at run time, so the
- * flash read path never sees them and the build is expected to be quiet. */
+ * flash read path never sees them and the build should be quiet. */
 #define SS_LC_ROMTAB         0x02u
 /* The reduced-table option: Mbed-TLS MBEDTLS_AES_FEWER_TABLES, wolfSSL
  * WOLFSSL_AES_SMALL_TABLES. Both default off. */

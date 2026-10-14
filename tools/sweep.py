@@ -6,10 +6,10 @@
 One pass per entry: build it, flash it, read the configuration BACK OFF THE
 DEVICE, capture, and verify every ciphertext before writing anything.
 
-WHY IT BUILDS WITH LINK=vcp. The victim's console then comes out on the
-ST-LINK's virtual COM port, so a whole sweep needs no wiring and no second
-board. That is the ON-CHIP arm, where the victim times its own encryption.
-The off-chip arm needs the instrument board and its own harness.
+It builds with LINK=vcp so the victim's console comes out on the ST-LINK's
+virtual COM port, which means a whole sweep needs no wiring and no second
+board. That's the ON-CHIP arm, where the victim times its own encryption;
+the off-chip arm needs the instrument board and its own harness.
 
 ONE CONFIGURATION PER FLASH, AND THE FLASH IS NOT OPTIONAL. Several axes
 here change the link-time layout, and the same firmware at three link-time
@@ -84,7 +84,7 @@ def build(mcu, lib, opts, link, baud):
 
     # ASK MAKE where this will land, rather than scraping the build log or
     # recomputing the naming rule here. A second copy of that rule is how a
-    # capture gets filed under the wrong name -- and the log says nothing at
+    # capture gets filed under the wrong name - and the log says nothing at
     # all when the target is already up to date, which is exactly how this
     # failed the first time it ran.
     r = _make(args, "variant")
@@ -145,7 +145,7 @@ def main(argv=None):
     for v in done:
         print("   ok   %s" % v)
     for label, why in failed:
-        print("   FAIL %s -- %s" % (label, why))
+        print("   FAIL %s - %s" % (label, why))
     if a.out:
         pathlib.Path(a.out).write_text(json.dumps(
             dict(mcu=a.mcu, n=a.n, link=a.link, baud=a.baud,

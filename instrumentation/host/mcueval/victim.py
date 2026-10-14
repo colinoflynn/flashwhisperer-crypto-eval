@@ -8,26 +8,26 @@
         ct, cyc = v.encrypt_cyc(bytes(16))
 
 This is the ON-CHIP arm: the victim times its own encryption and reports
-the count. It is the best case for an attacker and the easiest thing for a
-vendor to dismiss, which is why the off-chip instrument exists as well --
-see instrumentation/sstimer/. Both speak the same victim protocol, and the
-numbers from the two can be compared because they are measurements of the
-same encryptions.
+the count. It's the best case for an attacker and the easiest thing for a
+vendor to dismiss, which is why the off-chip instrument exists as well
+(see instrumentation/sstimer/). Both speak the same victim protocol, so
+the numbers from the two can be compared, since they're measurements of
+the same encryptions.
 
-RESYNC IS NOT OPTIONAL AND THE OBVIOUS VERSION OF IT IS WRONG. The protocol
-has no frame marker, so after a reset or a lost byte the two sides may
-disagree about where a command starts. resync() sends V_ENC one byte at a
-time until a response appears -- whatever that response answered, the victim
-is then at a command boundary.
+RESYNC IS NOT OPTIONAL, AND THE OBVIOUS VERSION OF IT IS WRONG. The
+protocol has no frame marker, so after a reset or a lost byte the two
+sides may disagree about where a command starts. resync() sends V_ENC one
+byte at a time until a response appears, and whatever that response
+answered, the victim is then at a command boundary.
 
-The trap, which cost a debugging round in the rig this came from: polling
-for a COMPLETE response after each filler byte, with a fixed sleep, sends
-one byte too many. At a low baud a seventeen-byte reply does not arrive
-inside one byte time, so the loop writes again after the victim has already
-answered; the victim is then holding a fresh opcode and eats the next
-command as its payload. Resync reports success and the very next command
-gets no reply at all. STOP WRITING THE MOMENT THE FIRST INBOUND BYTE
-APPEARS.
+The gotcha, which cost a debugging round in the rig this came from:
+polling for a COMPLETE response after each filler byte, with a fixed
+sleep, sends one byte too many. At a low baud a seventeen-byte reply
+doesn't arrive inside one byte time, so the loop writes again after the
+victim has already answered; the victim is then holding a fresh opcode and
+eats the next command as its payload. Resync reports success and the very
+next command gets no reply at all. STOP WRITING THE MOMENT THE FIRST
+INBOUND BYTE APPEARS.
 """
 from __future__ import annotations
 
@@ -136,7 +136,7 @@ class Victim:
                               "this build may not implement it"
                               % (op, bad))
         if head[0] != (op | P.V_RSP):
-            raise VictimError("expected response 0x%02x, got 0x%02x -- the "
+            raise VictimError("expected response 0x%02x, got 0x%02x - the "
                               "link is out of step, resync()"
                               % (op | P.V_RSP, head[0]))
         body = self._s.read(want)
@@ -161,7 +161,7 @@ class Victim:
                     time.sleep(0.05)          # let the rest of it land
                     self._s.reset_input_buffer()
                     return n
-        raise VictimError("resync failed after %d filler bytes -- the victim "
+        raise VictimError("resync failed after %d filler bytes - the victim "
                           "is not answering at all" % limit)
 
     # ---- the commands ---------------------------------------------------
@@ -182,7 +182,7 @@ class Victim:
 
     def encrypt_cyc(self, pt: bytes):
         """Returns (ciphertext, cycles). Raises if this build has no counter
-        -- which is a real answer, not a failure: the uninstrumented arm
+        - which is a real answer, not a failure: the uninstrumented arm
         exists on purpose, and reporting zeros would read as a
         constant-time result."""
         b = self._xfer(P.V_ENC_CYC, bytes(pt))

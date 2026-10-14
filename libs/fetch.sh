@@ -12,7 +12,7 @@
 # WHY NOT `git submodule update --init --depth 1`. That clones the default
 # BRANCH at depth 1, and every pin here is an older release tag that is not
 # in it. The result is a checkout of some other version under the right
-# directory name -- and for Mbed-TLS it lands on the 4.x line, which has no
+# directory name - and for Mbed-TLS it lands on the 4.x line, which has no
 # library/aes.c at all, so the build silently measures nothing. Not
 # hypothetical: it is what the first attempt at this repository did.
 #
@@ -22,13 +22,13 @@
 #
 # So each one is an empty repository with one remote, a sparse-checkout set
 # to the directories the build actually compiles from, and a single
-# depth-1 fetch of the pinned COMMIT -- which GitHub allows. Exact, small,
+# depth-1 fetch of the pinned COMMIT - which GitHub allows. Exact, small,
 # and it cannot drift.
 #
 # NOTHING IS VENDORED AND NOTHING IS PATCHED. The submodules are upstream's
 # own bytes at a stated commit. Every configuration this repository builds
 # is reached through the library's own documented mechanism, from
-# eval/lib/<name>/lib.mk, or through the linker -- never by editing library
+# eval/lib/<name>/lib.mk, or through the linker - never by editing library
 # source. tools/verify.sh checks that rather than asserting it.
 set -euo pipefail
 
@@ -99,7 +99,7 @@ while read -r name url pin version; do
     esac
     if [ -n "$f" ]; then
         if [ ! -f "$f" ]; then
-            echo "FAIL: $f missing -- this is not a $name tree, or the" >&2
+            echo "FAIL: $f missing - this is not a $name tree, or the" >&2
             echo "      sparse set does not cover it." >&2
             exit 1
         fi

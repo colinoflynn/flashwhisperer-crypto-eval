@@ -21,9 +21,9 @@ static uint8_t g_trig_on = 1u;
 /* ---- the slots the linker fills ---------------------------------------
  * Bounds exported by eval/lib/<name>/tables.ld through the shared sections
  * script. A slot with zero length means this configuration has no table of
- * that kind -- wolfSSL with SMALL_TABLES has no Te, Mbed-TLS with
+ * that kind: wolfSSL with SMALL_TABLES has no Te, Mbed-TLS with
  * FEWER_TABLES has only FT0, and stock Mbed-TLS has none of the three
- * because it generates its tables into .bss at run time. */
+ * since it generates its tables into .bss at run time. */
 extern const char _tabS[], _tabS_end[];   /* the byte S-box          */
 extern const char _tabT[], _tabT_end[];   /* the 1 KB word T-tables  */
 extern const char _tabD[], _tabD_end[];   /* decryption tables       */
@@ -35,8 +35,8 @@ static uint32_t slot(const char *a, const char *b)
 
 void ss_tables_fill(ss_libinfo_t *o)
 {
-    /* Slot 0 is the S-box because that is the table almost every
-     * configuration has at least one of, so it is the useful "primary"
+    /* Slot 0 is the S-box, since that's the table almost every
+     * configuration has at least one of, so it's the useful "primary"
      * address for SS_V_IDENT. The physical order in the image is T-tables
      * first; see the sections script. */
     o->tab[0] = slot(_tabS, _tabS_end);
@@ -63,8 +63,8 @@ uint8_t ss_common_cfg(void)
 /* ---- the measured region, and the ONLY place the trigger moves ---------
  *
  * The warm-up (SS_WARMUP, default on) runs a FIXED plaintext first, so trace
- * k does not depend on trace k-1's plaintext through the table-line state.
- * It is OUTSIDE the trigger window and INSIDE the UART interval, which is
+ * k doesn't depend on trace k-1's plaintext through the table-line state.
+ * It sits OUTSIDE the trigger window and INSIDE the UART interval, which is
  * most of why the externally timed turnaround runs about twice the trigger
  * pulse width.
  */
@@ -133,7 +133,7 @@ static void send_ident(void)
     ssb_put(0u);
     /* The first table this configuration actually HAS, so IDENT alone is
      * enough to attribute a trace count. Not simply tab[0]: wolfSSL's default
-     * build has no separate byte S-box -- its Te carries it -- so slot 0 is
+     * build has no separate byte S-box (its Te carries it), so slot 0 is
      * empty there and slot 1 is the address that matters. All three slots are
      * in SS_V_LIBINFO either way. */
     put32(li.tab[0] ? li.tab[0] : (li.tab[1] ? li.tab[1] : li.tab[2]));
@@ -176,11 +176,11 @@ static void execute(uint8_t op, const uint8_t *in)
             uint32_t c = 0u;
 
             if (!ssb_has_cyc()) {
-                /* This build carries no cycle counter at all -- that is the
-                 * point of the uninstrumented arm. Answering with the error
-                 * response rather than with zeros means the host learns it
-                 * from the device instead of reading a column of zeros as a
-                 * constant-time result. */
+                /* This build carries no cycle counter at all, which is the
+                 * whole point of the uninstrumented arm. Answering with the
+                 * error response rather than with zeros means the host learns
+                 * it from the device instead of reading a column of zeros as
+                 * a constant-time result. */
                 ssb_put(SS_V_RSP_ERR);
                 ssb_put(op);
                 break;
@@ -207,8 +207,8 @@ static void execute(uint8_t op, const uint8_t *in)
 
             ssb_acr_set(v);
             ssb_put(SS_V_SET_ACR | SS_V_RSP);
-            /* The READBACK, never the requested value: the board layer
-             * refuses a configuration this clock cannot run, and the caller
+            /* The READBACK, never the requested value. The board layer
+             * refuses a configuration this clock can't run, and the caller
              * learns it was refused by getting the old value back. */
             put32(ssb_acr_get());
             break;

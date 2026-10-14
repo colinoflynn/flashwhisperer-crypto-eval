@@ -2,7 +2,7 @@
 #
 # `eol=lf` IS LOAD-BEARING AND IS NOT THE DEFAULT. `text=auto` on its own
 # stores LF in the object database but converts on CHECKOUT to `core.eol`,
-# which defaults to `native` -- CRLF on Windows. `core.autocrlf=false` does
+# which defaults to `native` - CRLF on Windows. `core.autocrlf=false` does
 # NOT prevent that: autocrlf is the legacy fallback and is ignored once a
 # path has an explicit `text` attribute.
 #

@@ -6,13 +6,13 @@
 #
 #   FEWER=0|1    WOLFSSL_AES_SMALL_TABLES.
 #       Off: Te[4][256] and Td[4][256], `static const` and so IN FLASH IN
-#       EVERY BUILD -- wolfSSL has no ROM/RAM switch, which is the
+#       EVERY BUILD - wolfSSL has no ROM/RAM switch, which is the
 #       interesting difference from Mbed-TLS: its stock configuration
 #       already has the tables in flash, so there is no quiet default to
 #       compare against and the link-time twin is the only residence axis.
 #       On: a 256-byte Tsbox.
 #
-# Reached through WOLFSSL_USER_SETTINGS -- wolfSSL's own documented
+# Reached through WOLFSSL_USER_SETTINGS - wolfSSL's own documented
 # mechanism. No library source is modified.
 
 WOLFSSL_DIR = $(ROOT)/libs/wolfssl

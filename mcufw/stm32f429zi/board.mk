@@ -11,7 +11,7 @@ BOARD_SRC      = $(MCUDIR)/board.c $(MCUDIR)/startup.c
 BOARD_INC      = -I$(MCUDIR)
 # Only `vcp`. The Nucleo-144 wires its virtual COM port to USART3 and does
 # not break out a second UART by default, so there is no `header` link to
-# offer -- and asking for one is a make error rather than an image wired to
+# offer - and asking for one is a make error rather than an image wired to
 # nothing.
 BOARD_LINKS    = vcp
 # LATENCY | PRFTEN | ICEN | DCEN, and the interesting subsets. At 16 MHz

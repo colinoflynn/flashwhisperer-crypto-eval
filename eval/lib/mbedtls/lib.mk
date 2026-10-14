@@ -17,7 +17,7 @@
 #       Off: four 1 KB forward T-tables plus the S-box. On: one T-table,
 #       rotated inline.
 #
-# Both are reached through MBEDTLS_CONFIG_FILE -- Mbed-TLS's own documented
+# Both are reached through MBEDTLS_CONFIG_FILE - Mbed-TLS's own documented
 # mechanism. No library source is modified.
 
 MBEDTLS_DIR = $(ROOT)/libs/mbedtls
@@ -39,7 +39,7 @@ endif
 LIB_VARIANT = -rom$(ROMTAB)-few$(FEWER)
 
 ifeq ($(ROMTAB),0)
-LIB_BUILD_NOTE = "  NOTE: MBEDTLS_AES_ROM_TABLES is OFF -- this is STOCK Mbed-TLS." \
+LIB_BUILD_NOTE = "  NOTE: MBEDTLS_AES_ROM_TABLES is OFF - this is STOCK Mbed-TLS." \
                  "        Its tables are generated into .bss at run time, so they are" \
                  "        in RAM and this build is EXPECTED to be quiet. The table" \
                  "        slots will report address 0. Build ROMTAB=1 for the" \

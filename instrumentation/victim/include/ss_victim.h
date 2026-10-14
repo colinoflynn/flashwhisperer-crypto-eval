@@ -2,13 +2,13 @@
  *
  * The board half is ss_board.h; the wire protocol is
  * instrumentation/protocol/victim_proto.h. This file is the half a LIBRARY
- * under test has to fill in, and it is deliberately three functions: a key
+ * under test has to fill in, and it's deliberately three functions: a key
  * schedule, a one-block encrypt, and a description of where that library's
  * tables ended up.
  *
  * Everything in prov_encrypt runs inside the measured window, so a provider
  * is the SHORTEST GLUE THAT WORKS. Nothing in a provider configures its
- * library: that is done entirely through the library's own documented
+ * library: that's done entirely through the library's own documented
  * configuration mechanism, from eval/lib/<name>/lib.mk. Not one line of
  * library source is modified anywhere in this repository, and `make verify`
  * checks it rather than asserting it.
@@ -18,11 +18,11 @@
 
 #include <stdint.h>
 
-/* What SS_V_LIBINFO reports. Filled by the provider, because only it knows
- * what its library is and what it was configured with -- but the TABLE
- * ADDRESSES come from the linker, via ss_tables_fill() below, because the
- * tables are file-static in most libraries and inside a prebuilt archive in
- * at least one, so they are not addressable from C at all. */
+/* What SS_V_LIBINFO reports. Filled by the provider, since only it knows what
+ * its library is and what it was configured with. But the TABLE ADDRESSES
+ * come from the linker, via ss_tables_fill() below, because the tables are
+ * file-static in most libraries and inside a prebuilt archive in at least
+ * one, so they aren't addressable from C at all. */
 typedef struct
 {
     uint8_t  lib;         /* SS_LIB_*                                       */
@@ -45,11 +45,11 @@ void     prov_libinfo(ss_libinfo_t *out);
  * the residence axis work identically for a source library and a binary
  * archive. The slots are defined in eval/lib/<name>/tables.ld. */
 void     ss_tables_fill(ss_libinfo_t *o);
-/* A function pointer carries the Thumb bit on Cortex-M; the ADDRESS is what
- * a capture wants, so mask it. */
+/* A function pointer carries the Thumb bit on Cortex-M, and the ADDRESS is
+ * what a capture wants, so mask it. */
 uint32_t ss_code_addr(const void *fn);
-/* The configuration bits that are not the library's own -- currently just
- * the link-time table residence. */
+/* The configuration bits that aren't the library's own. Currently just the
+ * link-time table residence. */
 uint8_t  ss_common_cfg(void);
 
 /* ---- and this is the whole victim -------------------------------------- */

@@ -1,4 +1,4 @@
-# Build output. One directory per (part, variant) -- see build.mk for why
+# Build output. One directory per (part, variant) - see build.mk for why
 # every axis is in the directory name.
 build/
 

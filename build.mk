@@ -38,7 +38,7 @@ RAMTAB  ?= 0
 # Which physical link the victim speaks on. NO DEFAULT HERE: the parts do
 # not all offer the same links, so the default is the part's own first
 # choice and is set after board.mk has been read. Hardcoding `header` made
-# `make matrix` fail on the second part ported, which offers only `vcp` --
+# `make matrix` fail on the second part ported, which offers only `vcp` -
 # correctly refused rather than built wired to nothing, but refused for a
 # default this file had no business choosing.
 LINK    ?=
@@ -106,7 +106,7 @@ SRC = $(VICTIM)/src/ss_victim.c $(VICTIM)/src/ss_main.c \
 # -fdata-sections IS LOAD-BEARING, NOT A SIZE OPTIMISATION: it gives each
 # table its own input section so the shared sections script can collect and
 # relocate them, which is the only reason the residence axis exists for a
-# library whose tables are file-static -- or shipped as a binary archive.
+# library whose tables are file-static - or shipped as a binary archive.
 CFLAGS  = $(BOARD_CPU) -O2 -g -ffreestanding -fno-common \
           -fdata-sections -ffunction-sections -falign-functions=$(FALIGN) \
           -Wall -Wextra \

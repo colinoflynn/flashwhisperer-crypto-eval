@@ -1,9 +1,9 @@
 /* Mbed-TLS. The SHORTEST GLUE THAT WORKS: a key schedule at startup and a
- * one-block ECB encrypt, because everything in prov_encrypt runs inside the
- * measured window and the point is to measure the LIBRARY, not the wrapper.
+ * one-block ECB encrypt, since everything in prov_encrypt runs inside the
+ * measured window and we're measuring the LIBRARY rather than the wrapper.
  *
  * Nothing here configures Mbed-TLS. The two axes are its OWN options, set
- * through MBEDTLS_CONFIG_FILE from lib.mk -- see my_mbedtls_config.h.
+ * through MBEDTLS_CONFIG_FILE from lib.mk - see my_mbedtls_config.h.
  */
 #include <stdint.h>
 #include "ss_victim.h"
@@ -31,14 +31,14 @@ void prov_libinfo(ss_libinfo_t *o)
     /* STOCK MBED-TLS HAS MBEDTLS_AES_ROM_TABLES OFF: the tables are plain
      * `static` arrays in .bss, generated at run time by aes_gen_tables(),
      * and therefore in RAM. So the bit being CLEAR is the default build,
-     * and that build is EXPECTED TO BE QUIET -- it is a negative control
-     * that came with the library rather than one this project invented.
-     * Turning it on is what an integrator does to get ~9 KB of RAM back,
-     * and it is the configuration that puts the tables in flash.
+     * and that build should be QUIET: a negative control that came with
+     * the library rather than one this project invented. Turning it on is
+     * what an integrator does to get ~9 KB of RAM back, and it's the
+     * configuration that puts the tables in flash.
      *
-     * Reported from the macro rather than assumed from the Makefile,
-     * because the directory name is what someone meant to build and this is
-     * what is running. */
+     * Reported from the macro rather than assumed from the Makefile, since
+     * the directory name is what someone meant to build and this is what
+     * is running. */
 #if defined(MBEDTLS_AES_ROM_TABLES)
     o->cfg |= SS_LC_ROMTAB;
 #endif

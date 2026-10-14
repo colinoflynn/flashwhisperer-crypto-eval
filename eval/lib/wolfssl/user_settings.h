@@ -1,12 +1,12 @@
 /* wolfSSL user_settings.h for the sstimer library victim: wolfCrypt only,
  * AES direct/ECB, bare metal. Enabled with -DWOLFSSL_USER_SETTINGS, which is
- * wolfSSL's own documented mechanism -- no library source is touched.
+ * wolfSSL's own documented mechanism - no library source is touched.
  *
  * Adapted from rigs/fw_f4_lib/user_settings.h, with the Cortex-M4 note
  * corrected: this victim is a Cortex-M3 (STM32L152RE).
  *
  * THE ONE AXIS IS WOLFSSL'S OWN OPTION. WOLFSSL_AES_SMALL_TABLES defaults OFF
- * -- wolfcrypt/src/aes.c says so in its own options comment -- which gives
+ * - wolfcrypt/src/aes.c says so in its own options comment - which gives
  * `Te[4][256]` and `Td[4][256]`, four 1 KB word tables, `static const` and so
  * in flash. wolfSSL has NO ROM/RAM switch, so unlike Mbed-TLS its stock build
  * already has its tables in flash; the only residence axis available is the

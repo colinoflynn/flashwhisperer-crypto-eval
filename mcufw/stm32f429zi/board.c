@@ -6,12 +6,11 @@
  * for, which is why it was chosen:
  *
  *   * a FOUR-BIT wait-state field and TWO CACHES, against one latency bit
- *     and no cache -- so ssb_acr_set has a real dance to do;
+ *     and no cache, so ssb_acr_set has a real dance to do;
  *   * a cycle counter that counts UP over 32 bits (DWT CYCCNT), against
- *     one that counts DOWN over 24 (SysTick) -- so ssb_cyc_delta earns its
- *     existence rather than merely having it. BOTH are built here,
- *     selected by TIMING=, so the two directions are exercised on one part
- *     against the same cipher;
+ *     one that counts DOWN over 24 (SysTick), so ssb_cyc_delta earns its
+ *     existence. BOTH are built here, selected by TIMING=, so the two
+ *     directions get exercised on one part against the same cipher;
  *   * a different console peripheral on different pins.
  *
  * Nothing outside this file and its header changed to add it.
@@ -21,7 +20,7 @@
 #include "ss_board.h"
 #include "ss_victim.h"
 
-/* HSI, 16 MHz, no PLL. Deliberate: it is the configuration the earlier
+/* HSI, 16 MHz, no PLL. Deliberate: it's the configuration the earlier
  * measurements of this part were taken at, so the numbers are comparable,
  * and it keeps the clock out of the set of things that changed between
  * parts. The accelerator is the axis here, not the clock. */
@@ -40,11 +39,11 @@
 
 /* The Nucleo-144's virtual COM port is USART3 on PD8/PD9, AF7. There is no
  * second broken-out UART wired by default on this board, so unlike the
- * other part here `header` and `vcp` are the same peripheral -- board.mk
- * offers only `vcp` and the build refuses the other rather than silently
+ * other part here `header` and `vcp` are the same peripheral. board.mk
+ * offers only `vcp`, and the build refuses the other rather than silently
  * producing an image wired to nothing. */
 #if !defined(SS_LINK_VCP)
-#  error "stm32f429zi offers LINK=vcp only -- see mcufw/stm32f429zi/board.mk"
+#  error "stm32f429zi offers LINK=vcp only - see mcufw/stm32f429zi/board.mk"
 #endif
 
 /* PB0 is LD1, the green user LED, and is also on CN10. Usable as a scope
@@ -60,16 +59,16 @@ const char *ssb_name(void) { return "stm32f429zi"; }
  * while its cache is DISABLED. Writing the enable bit alone leaves
  * whatever lines were already there, so a configuration reached by writing
  * ACR at run time is NOT the configuration a reset-time write would
- * produce -- and the difference shows up as a measurement rather than as
- * an error. So every transition here disables, resets, then enables.
+ * produce, and the difference shows up as a measurement rather than as an
+ * error. So every transition here disables, resets, then enables.
  *
  * The wait-state field is four bits wide, so unlike a one-bit part there
  * is a real range to sweep, and over-programming is legal. What is NOT
  * legal is UNDER-programming: at a clock that needs wait states, zero is
  * refused. At 16 MHz in the default voltage range the part needs none, so
  * every value of the field is legal here and the refusal below never
- * fires -- it is kept because the clock is a build-time choice and the
- * next person to raise it should not have to remember this.
+ * fires. It's kept because the clock is a build-time choice, and the next
+ * person to raise it shouldn't have to remember this.
  */
 static uint32_t min_latency(void)
 {
@@ -123,8 +122,8 @@ uint32_t ssb_acr_get(void) { return FLASH_ACR; }
 uint32_t ssb_clk_hz(void)  { return SS_CLK_HZ; }
 int      ssb_set_mhz(uint32_t mhz) { (void)mhz; return 0; }
 
-/* The ART has no architectural hit/miss counters -- unlike some parts
- * whose cache does. Saying 0 here makes the host report "none" instead of
+/* The ART has no architectural hit/miss counters, unlike some parts whose
+ * cache does. Saying 0 here makes the host report "none" instead of
  * inventing numbers. */
 int  ssb_has_monitors(void) { return 0; }
 void ssb_monitors_reset(void) {}
@@ -173,7 +172,7 @@ int ssb_get(void)
     /* RE-ARM TRCENA HERE, AND THIS IS NOT BELT AND BRACES.
      *
      * A debug probe clears DEMCR.TRCENA when it DISCONNECTS, which happens
-     * shortly AFTER the board has booted and run its own init -- so arming
+     * shortly AFTER the board has booted and run its own init, so arming
      * the counter once in ssb_init is arming it and then having it turned
      * off again. CYCCNT then stays frozen, every delta comes out exactly
      * zero, and because the liveness check in ssb_init ran BEFORE the
@@ -181,11 +180,11 @@ int ssb_get(void)
      * counter. That is what it did here on the first run: 2 000 traces of
      * mean 0.000, sd 0.0000, and an IDENT saying cyc=1.
      *
-     * The console read is the right place for the repair: it is where
-     * this victim spends all of its idle time, it runs once per received
-     * byte, and it is outside every measured region -- so the cost is not
-     * in any window and the counter is live again before the command that
-     * needs it has even finished arriving.
+     * The console read is the right place for the repair: it's where this
+     * victim spends all of its idle time, it runs once per received byte,
+     * and it's outside every measured region. So the cost isn't in any
+     * window, and the counter is live again before the command that needs
+     * it has even finished arriving.
      */
     if (!(DEMCR & DEMCR_TRCENA)) {
         DEMCR |= DEMCR_TRCENA;
@@ -235,7 +234,7 @@ static void cyc_init(void)
 
     /* TRCENA ARMED HERE, not once at boot somewhere else: a debug probe
      * clears it when it disconnects after flashing, and a counter that is
-     * never enabled reads zero for every window -- which is exactly what a
+     * never enabled reads zero for every window, which is exactly what a
      * constant-time result looks like. */
     DEMCR |= DEMCR_TRCENA;
     __asm volatile("dsb; isb");
