@@ -1,0 +1,19 @@
+# Build output. One directory per (part, variant) -- see build.mk for why
+# every axis is in the directory name.
+build/
+
+# Captures. The data is large and is not tracked; results/MANIFEST.tsv
+# records a size and a SHA-256 per file instead.
+results/**/*.npz
+results/**/*.npy
+
+# Vendor trees that are fetched rather than vendored. The submodules under
+# libs/ ARE tracked (as gitlinks); this covers anything a fetch script puts
+# beside them, such as an archive that is not on GitHub at all.
+libs/*/vendor/
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/

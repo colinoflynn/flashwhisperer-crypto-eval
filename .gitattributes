@@ -1,0 +1,28 @@
+# Line endings are LF, in the repository AND in the working tree.
+#
+# `eol=lf` IS LOAD-BEARING AND IS NOT THE DEFAULT. `text=auto` on its own
+# stores LF in the object database but converts on CHECKOUT to `core.eol`,
+# which defaults to `native` -- CRLF on Windows. `core.autocrlf=false` does
+# NOT prevent that: autocrlf is the legacy fallback and is ignored once a
+# path has an explicit `text` attribute.
+#
+# This matters here more than in a pure-Python repository: the firmware is
+# built under WSL, every tools/*.sh script runs there, and `#!/bin/bash\r`
+# is not an interpreter. A CRLF checkout breaks the build on a machine that
+# never saw a Windows editor.
+#
+# This file is committed BEFORE anything else, because a tree checked out
+# before it exists is already CRLF and a scripted edit then silently matches
+# nothing.
+* text=auto eol=lf
+
+# Firmware images and captures: never converted, never diffed as text.
+*.bin binary
+*.elf binary
+*.hex binary
+*.npz binary
+*.npy binary
+
+# A linker script's content is what the linker reads; keep it LF explicitly
+# so a fragment INCLUDEd from another file cannot pick up stray CRs.
+*.ld text eol=lf
