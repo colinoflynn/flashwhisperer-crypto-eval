@@ -4,3 +4,6 @@
 [submodule "wolfssl"]
 	path = libs/wolfssl
 	url = https://github.com/wolfSSL/wolfssl.git
+[submodule "flashwhisperer"]
+	path = flashwhisperer
+	url = https://github.com/colinoflynn/flashwhisperer.git

@@ -110,8 +110,15 @@ CC      = $(CROSS)gcc
 OBJ     = $(addprefix $(BUILD)/,$(notdir $(SRC:.c=.o)))
 vpath %.c $(sort $(dir $(SRC)))
 
-.PHONY: all addr clean
+.PHONY: all addr clean variant
 all: $(TARGET).bin
+
+# The variant directory name, for a caller that needs to know where a build
+# landed. Asking make is the only way to get it that cannot disagree with
+# the rule above; recomputing the naming scheme in a script is a second copy
+# of it, and the two drifting apart files a capture under the wrong name.
+variant:
+	@echo $(VARIANT)
 
 $(BUILD)/%.o: %.c | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
