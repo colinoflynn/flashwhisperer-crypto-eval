@@ -169,15 +169,34 @@ sources to `BOARD_SRC`. The rest of the tree doesn't care.
 ## The flash read width is NOT reported by the device
 
 It's a per-part property that nothing on the chip announces, and the
-attack needs it. `line_shift` is log2 of the flash read width in bytes,
-and scoring an 8-byte row at the default of 4 merges two real rows into
-one partition and tests a collision that doesn't exist. Getting it wrong
-returns a clean null, not a degraded answer.
+attack needs it. Scoring an 8-byte row at the default of 4 merges two real
+rows into one partition and tests a collision that doesn't exist. Getting
+it wrong returns a clean null, not a degraded answer.
 
-Record it in the part's dossier when you measure it, and pass it to
-`tools/attack.py --line-shifts`. Measuring it is a separate exercise: the
-spacing at which a computed-call table's timing split disappears is the
-flash word width, read straight off the part.
+Two numbers come out of it, and they are not the same number:
+
+* `EVAL_LINE_SHIFT` in the part's `eval.mk` is log2 of the ROW WIDTH in
+  bytes - how many bytes one flash read brings back. It describes the part
+  and nothing else, and it belongs in that file because
+  `tools/attack.py` reads it: the row width is half of what turns a
+  table's address into a row offset, and a number that lives only in a
+  dossier is a number no script can reach.
+* `--line-shifts` is log2 of the row width divided by the width of ONE
+  TABLE ENTRY, so it describes the part *and* the library's table. On an
+  8-byte row that's 3 for a byte S-box and 1 for a 4-byte word table.
+  Which of them a configuration reads in its last round is not derivable,
+  so it's swept.
+
+The two coincide for a byte S-box, which is why they were one number here
+for as long as every capture was one. They are also the units the row
+offset is in: `--line-offs auto` derives it as
+`(table_addr % row_bytes) // entry_bytes`, counted in entries, with the
+entry width coming out as `row_bytes >> line_shift`.
+
+Record the row width in the part's dossier when you measure it, and in its
+`eval.mk`. Measuring it is a separate exercise: the spacing at which a
+computed-call table's timing split disappears is the flash word width,
+read straight off the part.
 
 ## Adding a library instead
 

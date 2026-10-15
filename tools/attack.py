@@ -26,18 +26,47 @@ them:
                   returns a clean null that reads exactly like a part that
                   doesn't leak.
 
-  --line-offs     the table's offset within its row. `auto` takes it from
-                  the address the DEVICE reported, which is right for a
+  --line-offs     the table's offset within its flash row, COUNTED IN
+                  ENTRIES rather than in bytes. `auto` derives it from the
+                  address the DEVICE reported and the row width in
+                  eval/mcu/<part>/eval.mk:
+
+                      (table_addr % row_bytes) // entry_bytes
+
+                  There are two independent ways to get this wrong and
+                  both of them return a clean null rather than a degraded
+                  answer, so neither announces itself.
+
+                  ALIGNMENT is the first. A hand-passed 0 is right for a
                   linker-aligned table and wrong for one that landed
-                  wherever it landed. Worth 2x to 10x in traces.
+                  wherever it landed; `auto` exists to take that off you.
+                  Worth 2x to 10x in traces.
+
+                  ENTRY WIDTH is the second, and it is the one that read
+                  as a detail until it cost a campaign. The offset counts
+                  ENTRIES, so the entry size has to come into it: the
+                  F429's wolfSSL Thumb-2 `te`, a 4-byte word table at
+                  0x08001fb8 on a 16-byte row, sits at entry
+                  (0xb8 % 16) // 4 = 2. This file used to mask the address
+                  with (1 << line_shift) - 1, a count of ENTRIES, which
+                  gives 0 there - and at (2, 0) that capture reads 0/16 at
+                  25 000 traces and needs 250 000, where (2, 2) returns a
+                  verified master key at 25 000. The two formulas agree
+                  whenever entries are one byte wide, which is most of
+                  what this repository has captured, and they also agree
+                  on any table the linker put on a 1 KB boundary, which is
+                  all the rest of it - so no number here ever moved, and
+                  the bug kept quiet until a T-table landed unaligned.
 """
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import glob
 import json
 import os
 import pathlib
+import re
 import sys
 
 # Be a good citizen: this is the CPU-expensive half and the same box
@@ -77,6 +106,100 @@ def load(path: pathlib.Path):
                   plaintext=d["pt"], ciphertext=d["ct"],
                   label=meta["variant"], meta=meta)
     return cap, meta, is_control
+
+
+def row_bytes_for(mcu: str) -> int:
+    """The part's flash fill granule, in BYTES, from its own eval.mk.
+
+    EVAL_LINE_SHIFT there is log2 of the row width in bytes - the number
+    of bytes one flash read brings back, measured on silicon and in no
+    datasheet. It is read from the part's directory rather than passed on
+    the command line because it is a property of the part, and because the
+    F429 spent a campaign with that number living in prose in a README
+    where no script could reach it.
+
+    NOT the same thing as --line-shifts, which is log2(row_bytes /
+    entry_bytes) and therefore depends on the TABLE as well as the part.
+    The two coincide for a byte S-box, which is the whole reason this
+    function did not exist until now.
+
+    WHAT THIS DOES NOT CHECK: whether the number is right. eval.mk records
+    EVAL_LINE_SHIFT_MEASURED for that, and two parts here say `no`; this
+    reads the number either way. Nor does it look at whether the table is
+    in flash at all - a tables-in-RAM twin gets a row width it has no use
+    for, which is harmless because it is a control and is supposed to
+    score nothing.
+    """
+    if not mcu:
+        raise SystemExit(
+            "this capture's metadata names no part, so its flash row width\n"
+            "cannot be looked up. Pass --line-offs explicitly.")
+    mk = _ROOT / "eval" / "mcu" / mcu / "eval.mk"
+    if not mk.is_file():
+        raise SystemExit(
+            "no %s, so the flash row width for this capture is unknown.\n"
+            "The row width is what turns a table ADDRESS into a row offset,\n"
+            "and nothing on the chip reports it. Either add EVAL_LINE_SHIFT\n"
+            "to that file - log2 of the row width in bytes - or pass\n"
+            "--line-offs explicitly and take the offset on yourself."
+            % mk.relative_to(_ROOT))
+    m = re.search(r"^\s*EVAL_LINE_SHIFT\s*[:?]?=\s*(\d+)", mk.read_text(),
+                  re.MULTILINE)
+    if not m:
+        raise SystemExit(
+            "%s has no EVAL_LINE_SHIFT. That is log2 of the flash row width\n"
+            "in BYTES, measured on silicon, and --line-offs auto cannot\n"
+            "derive an entry offset without it. Add it, or pass --line-offs\n"
+            "explicitly." % mk.relative_to(_ROOT))
+    return 1 << int(m.group(1))
+
+
+def entry_bytes_for(row_bytes: int, line_shift: int) -> int | None:
+    """How wide one table entry is under this candidate, or None.
+
+    `line_shift` is log2(row_bytes / entry_bytes), so against a measured
+    row width it pins the entry width: 1 << line_shift entries share a
+    row, and the row is row_bytes long.
+
+    None means the candidate asks for MORE entries per row than the row
+    has bytes, so the entries would be narrower than a byte. That is not a
+    table, but it is not a mistake either - it is a hypothesis that the
+    row is wider than eval.mk says, and the sweep is entitled to try it:
+    the F401's row width of 16 bytes was established by sweeping 2, 3, 4
+    and 5 and watching only 4 produce a key. See `auto_line_off` for what
+    the offset means there.
+    """
+    entry_bytes = row_bytes >> line_shift
+    return entry_bytes if entry_bytes >= 1 else None
+
+
+def auto_line_off(table_addr: int, row_bytes: int, line_shift: int) -> int:
+    """Where the table's first entry sits in its row, COUNTED IN ENTRIES.
+
+        entry_bytes = row_bytes >> line_shift
+        line_off    = (table_addr % row_bytes) // entry_bytes
+
+    Two numbers go in because two are needed: the row width says which
+    bytes share a read, and the entry width says how many entries that
+    is. `line_shift` already carries their ratio, so the entry width falls
+    out of it - but the ratio alone cannot say where in the row the table
+    starts, which is what this returns. Masking the address with
+    (1 << line_shift) - 1 answers it only for one-byte entries; see
+    --line-offs in the module docstring for the F429 capture that proves
+    the difference costs 10x in traces.
+
+    A candidate wider than the measured row - `entry_bytes_for` returning
+    None - has only one reading left that is about a real table: one-byte
+    entries in a row of (1 << line_shift) bytes, which is the candidate
+    disagreeing with eval.mk about the part rather than about the table.
+    It is taken at its word, and the offset is the address in that
+    hypothesised row. Which is also the old masking formula, so a sweep
+    that reaches past the row width scores exactly what it always did.
+    """
+    entry_bytes = entry_bytes_for(row_bytes, line_shift)
+    if entry_bytes is None:
+        return table_addr % (1 << line_shift)
+    return (table_addr % row_bytes) // entry_bytes
 
 
 def main(argv=None):
@@ -127,15 +250,35 @@ def main(argv=None):
               % (meta["lib"], meta["lib_version"], meta["cfg_str"],
                  meta["table_addr"], len(cap.timing), sd, uniq))
 
-        # `auto` means the offset the table actually landed at, which the
-        # device reported and the capture recorded.
+        # `auto` means the offset the table actually landed at: the
+        # address the device reported, read against the row width in the
+        # part's eval.mk. It is PER GEOMETRY, because the offset is in
+        # entries and each candidate shift implies a different entry
+        # width - the same address is entry 0 of a byte row and entry 2 of
+        # the same row read as 4-byte words.
         offs = (None if a.line_offs.strip() == "auto"
                 else [int(x, 0) for x in a.line_offs.split(",")])
         geoms = default_geometries(shifts, offs, models)
         if offs is None:
-            geoms = [g.__class__(g.line_shift,
-                                 meta["table_addr"] & ((1 << g.line_shift) - 1),
-                                 g.pairs, g.ct_adjacent) for g in geoms]
+            row = row_bytes_for(meta.get("mcu"))
+            geoms = [dataclasses.replace(
+                         g, line_off=auto_line_off(meta["table_addr"], row,
+                                                   g.line_shift))
+                     for g in geoms]
+            # Printed, not assumed: the offset is the number that decides
+            # whether the run means anything, and it is derived from two
+            # numbers neither of which is on the chip. `?B` is a candidate
+            # shift wider than the measured row - a hypothesis about the
+            # PART, scored at one-byte entries.
+            print("   row %d bytes (eval/mcu/%s/eval.mk)  auto off: %s"
+                  % (row, meta["mcu"],
+                     "  ".join(
+                         "ls=%d/%s->%d"
+                         % (s,
+                            ("%dB" % entry_bytes_for(row, s)
+                             if entry_bytes_for(row, s) else "?B"),
+                            auto_line_off(meta["table_addr"], row, s))
+                         for s in shifts)))
 
         lad = ladder(cap, n_values=n_values, geometries=geoms,
                      verify=(bytes(cap.plaintext[0]), bytes(cap.ciphertext[0])),

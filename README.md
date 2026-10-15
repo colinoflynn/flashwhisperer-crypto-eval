@@ -203,6 +203,17 @@ python tools/attack.py results/stm32f429zi/*.npz \
        --threads 4 --out results/stm32f429zi/recoveries.json
 ```
 
+That offset is in ENTRIES, not in bytes, so `auto` needs the part's row
+width as well as the table's address - it reads the width from
+`EVAL_LINE_SHIFT` in `eval/mcu/<part>/eval.mk` and prints what it derived.
+A 4-byte word table at `0x08001fb8` on a 16-byte row starts at entry
+`(0xb8 % 16) // 4 = 2`, not at 0, and an attack handed 0 there reads 0/16
+where 2 gives a verified key - the same clean null a part that doesn't leak
+gives. Everything captured here is either a byte S-box or a table the
+linker put on a 1 KB boundary, where every way of computing the offset
+agrees, which is exactly why this was worth writing down rather than
+leaving to the reader.
+
 The logs and the `recoveries.json` from both parts are committed under
 `results/<part>/`, so the numbers above are checkable without a board even
 though the captures themselves are not tracked.
