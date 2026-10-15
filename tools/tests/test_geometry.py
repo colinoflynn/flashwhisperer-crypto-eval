@@ -58,9 +58,16 @@ def _old_formula(table_addr: int, line_shift: int) -> int:
 # (name, row_bytes, entry_bytes, addr, expected line_off). Taken from
 # tools/geometry.py in the wolfssl-flash-leakage-demo tree, which derives
 # this from first principles and whose --check mode agrees with every
-# capture that recorded a geometry. The five marked disagree with the old
-# masking formula; the rest are there so a "fix" that breaks the agreeing
-# cases is caught too.
+# capture that recorded a geometry. The four with 4-byte entries off a
+# boundary disagree with the old masking formula; the rest are there so a
+# "fix" that breaks the agreeing cases is caught too.
+#
+# A SNAPSHOT, on purpose. The names say which cell each case came from,
+# but the addresses are this file's own data and are not chased: a cell
+# whose image gets rebuilt there moves to a new link address, and
+# g474_vendor_c already has. The live comparison is
+# test_agrees_with_the_sibling_trees_derivation, which compares what the
+# two trees COMPUTE and not where anything landed.
 REFERENCE_CELLS = [
     # 4-byte entries, NOT row-aligned - the cases that matter.
     ("f429_asm", 16, 4, 0x08001FB8, 2),
@@ -113,33 +120,43 @@ def test_the_four_byte_entry_cases_are_the_ones_that_moved():
 @pytest.mark.skipif(not _SIBLING.is_file(),
                     reason="no wolfssl-flash-leakage-demo checkout beside "
                            "this one; REFERENCE_CELLS stands on its own")
-def test_reference_cells_have_not_drifted_from_the_sibling_tree():
-    """Same question, asked of the implementation that is not this one.
+def test_agrees_with_the_sibling_trees_derivation():
+    """Same arithmetic, asked of the implementation that is not this one.
 
-    It derives the geometry per cell from the part's granule and the
+    It derives each cell's geometry from the part's granule and the
     table's entry width, and its own --check mode compares that against
-    what each shipped capture recorded. If this disagrees, one of the two
-    trees has been edited and the other has not, and the offsets here are
-    no longer the ones the captures recover at.
+    what each shipped capture recorded. So every cell it holds is a free
+    case for this one, including tables no capture here has.
+
+    It compares the DERIVATION and not the addresses, deliberately. The
+    first cut of this test pinned the sibling's addresses too and failed
+    within the hour, because that tree rebuilt its vendor-harness images
+    and `Te` moved from 0x08007c14 to 0x08007fa4 - the same entry offset,
+    1, since both are 4 bytes into an 8-byte row. An address there is a
+    link-time accident and moves whenever something is rebuilt; what must
+    not move is what the two trees compute from it. REFERENCE_CELLS above
+    is this file's own fixed data and does not chase theirs.
     """
     import importlib.util
     spec = importlib.util.spec_from_file_location("_sib_geometry", _SIBLING)
     g = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(g)
 
-    matched = 0
-    for name, row, entry, addr, want in REFERENCE_CELLS:
-        if name not in g.CELLS:                 # renamed or retired there
-            continue
+    checked = 0
+    for name in sorted(g.CELLS):
         d = g.derive(name)
-        assert (d["row_bytes"], d["entry_bytes"], d["addr"], d["line_off"]) \
-            == (row, entry, addr, want), name
-        matched += 1
+        if d["line_shift"] is None:             # no table, or table in SRAM
+            continue
+        assert (auto_line_off(d["addr"], d["row_bytes"], d["line_shift"])
+                == d["line_off"]), "%s at 0x%08x" % (name, d["addr"])
+        assert entry_bytes_for(d["row_bytes"], d["line_shift"]) \
+            == d["entry_bytes"], name
+        checked += 1
     # A test that silently matched nothing is the failure mode this whole
     # file is about, so say how thin it got rather than passing green.
-    assert matched >= len(REFERENCE_CELLS) - 1, (
-        "only %d of %d cells are still named that in the sibling tree"
-        % (matched, len(REFERENCE_CELLS)))
+    assert checked >= 8, (
+        "only %d scorable cells in %s - too thin to be a cross-check"
+        % (checked, _SIBLING))
 
 
 def test_f429_asm_is_the_worked_counter_example():
