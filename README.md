@@ -1,14 +1,16 @@
 # flashwhisperer-crypto-eval
 
-*🤖WARNING🤖: This file LLM generated and may read oddly. Will eventually be human-edited for that real-life touch and typos.*
+*🤖🥩: This document is partially human-written, partially LLM. This repo flags
+LLM-written docs as I find they can be more annoying to read as a human bag of 🥩*
 
 What does a microcontroller's flash accelerator setting do to the
 execution time of a crypto library's AES? That is the question this
-answers, and it only needs a dev board - no scope, no probe.
+answers, and it only needs a dev board by using on-board measurement
+from microcontroller timers.
 
 A part gives you a clock, a console, a trigger pin, an accelerator word
 and a cycle counter. A library gives you a key schedule and a one-block
-encrypt. Everything in between is shared, and knows about neither.
+encrypt.
 
 ```bash
 git submodule update --init          # flashwhisperer, the analysis half
@@ -86,7 +88,7 @@ Zero-length slots, so the device will report address 0 for all three. That
 is a result and not a missing value - it's the negative control that came
 with the library, with the positive control one flag away.
 
-### The two checks worth running before you believe anything
+### Initial Checks
 
 `check_tables_move.sh` is the cheapest proof that the three linker
 fragments are still wired together. A `tab_*.ld` that quietly stopped
@@ -238,11 +240,7 @@ one distinct value over the whole capture.
 
 The ciphertext check: every captured block is checked against a reference
 AES under the victim's compiled-in key, and a capture that fails is never
-written. This isn't belt and braces. In the work this grew out of, a
-library framed correctly, returned success on every call, and produced a
-deterministic WRONG ciphertext, because a peripheral clock that nothing
-documents was off. A framing or length check would have filed 60 000
-traces of a mis-driven cipher as a measurement.
+written.
 
 The recovery: a statistic is not a channel, and a spread can be large and
 yield nothing. `tools/attack.py` runs the last-round recovery and reports
@@ -313,7 +311,7 @@ are in flash in every build.
 
 ### Two reasons a recovery fails, and they look identical
 
-Both of these bit me here, and I misread both the first time.
+Failure to get a key does not mean it won't work. A couple common problems:
 
 * The pair model. Scoring only the 24 intra-column byte pairs, neither
   third-party library recovered anything at 20 000 traces. About half of
@@ -322,13 +320,13 @@ Both of these bit me here, and I misread both the first time.
   reach the exact key at 2 500. More traces would never have helped, and
   the margin scaling says so without taking any: a real margin is in
   cycles and holds its size as n grows, a noise margin falls as 1/√n.
+
 * The trace count. On the F429 the model was fine and the data was short,
   20 000 gave 3/16 and 100 000 gives the key.
 
 So a partial recovery that doesn't improve with data is a model problem,
 and one that climbs is a data problem. Telling them apart costs one
-ladder; guessing instead costs a wrong conclusion in a README (ask me how
-I know). Neither pair model dominates either - on the reference cipher the
+ladder. Neither pair model dominates either - on the reference cipher the
 narrow one wins - so `tools/attack.py` runs both and says which.
 
 Every table address, the spread, each recovery trace count and the one
@@ -360,10 +358,7 @@ same firmware at three link-time accidents has needed 6 250, 12 500 and
 *device* reported, not the one the directory name implies.
 
 Resolve a board by its debug probe's serial number, never by a COM number.
-Port numbers move on replug and two boards of one type are
-distinguishable by nothing else. The registry this grew out of recorded
-`COM3` for the part used to bring this up; the board was on `COM53`, and
-the stale value survived that registry's own verifying accessor.
+This allows many boards to be attached to a single host.
 
 ## Requirements
 
@@ -372,4 +367,6 @@ firmware builds under WSL on this bench, which is why the line endings are
 pinned to LF and the build goes through `tools/build.sh` rather than an
 inline `bash -lc`.
 
-No licence is declared yet. That is a decision, not an oversight.
+flashwhisperer is APACHE2 licensed, but some vendor and HAL code has
+other licenses. The license in this repo does not claim any ownership
+over other code.
