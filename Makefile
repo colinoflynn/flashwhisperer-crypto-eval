@@ -39,7 +39,7 @@ one:
 	@$(ROOT)/tools/build.sh MCU=$(MCU) $(filter-out one,$(MAKECMDGOALS))
 
 # EVERY CONFIGURATION WORTH HAVING, AND DELIBERATELY NOT A CROSS PRODUCT.
-# ROMTAB exists only for Mbed-TLS and FEWER only for the two that have it, so
+# ROMTAB exists only for Mbed-TLS and FEWER only for the libraries that have it, so
 # a generated cross product would silently build meaningless combinations and
 # report them as results. Written out instead, which also makes the list
 # reviewable.
@@ -57,6 +57,9 @@ matrix:
 	$(MAKE) -s one MCU=$(MCU) LIB=wolfssl FEWER=0       RAMTAB=0
 	$(MAKE) -s one MCU=$(MCU) LIB=wolfssl FEWER=0       RAMTAB=1
 	$(MAKE) -s one MCU=$(MCU) LIB=wolfssl FEWER=1       RAMTAB=0
+	$(MAKE) -s one MCU=$(MCU) LIB=libtomcrypt FEWER=0   RAMTAB=0
+	$(MAKE) -s one MCU=$(MCU) LIB=libtomcrypt FEWER=0   RAMTAB=1
+	$(MAKE) -s one MCU=$(MCU) LIB=libtomcrypt FEWER=1   RAMTAB=0
 	@echo
 	@echo "built for $(MCU):"
 	@ls -1 $(ROOT)/build/$(MCU)/

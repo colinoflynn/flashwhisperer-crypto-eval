@@ -38,6 +38,7 @@ parts:
   stm32f429zi    Cortex-M4F, 16 MHz, 4-bit LATENCY + ART I/D caches, DWT or SysTick
   stm32l152re    Cortex-M3, 32 MHz, one-bit LATENCY, no cache - the floor case
 libraries:
+  libtomcrypt    LibTomCrypt AES at 6c6d510; default 4T and LTC_SMALL_CODE 1T
   mbedtls        Mbed-TLS 3.6.7, axes ROMTAB and FEWER (both default off)
   refsbox        this project's own byte S-box AES - the control, source in-tree
   wolfssl        wolfSSL 5.9.4, axis FEWER; tables are in flash in EVERY build
@@ -219,6 +220,14 @@ leaving to the reader.
 The logs and the `recoveries.json` from both parts are committed under
 `results/<part>/`, so the numbers above are checkable without a board even
 though the captures themselves are not tracked.
+
+LibTomCrypt's default final round has four separate word-sized `Te4_*`
+tables. Score output-byte pairs that share a table with
+`tools/attack_libtomcrypt.py`; its `LTC_SMALL_CODE` build uses one shared
+`Te4` table and the same tool selects all pairs. It derives the flash-row
+geometry from the MCU configuration and applies the same model to the
+RAM-table control. The F429 results are in
+[`results/stm32f429zi/README.md`](results/stm32f429zi/README.md).
 
 ## What it measures
 

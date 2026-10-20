@@ -29,7 +29,7 @@ _ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 #: The matrix, as (library, extra make variables). Deliberately explicit
 #: rather than a cross product: ROMTAB exists only for Mbed-TLS and FEWER
-#: only for the two that have it, so a generated product would build
+#: only for libraries that have it, so a generated product would build
 #: meaningless combinations and report them as results.
 MATRIX = [
     ("refsbox", dict(LAYOUT="sbox", RAMTAB="0")),
@@ -42,6 +42,9 @@ MATRIX = [
     ("wolfssl", dict(FEWER="0", RAMTAB="0")),
     ("wolfssl", dict(FEWER="0", RAMTAB="1")),
     ("wolfssl", dict(FEWER="1", RAMTAB="0")),
+    ("libtomcrypt", dict(FEWER="0", RAMTAB="0")),
+    ("libtomcrypt", dict(FEWER="0", RAMTAB="1")),
+    ("libtomcrypt", dict(FEWER="1", RAMTAB="0")),
 ]
 
 

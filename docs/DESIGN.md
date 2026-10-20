@@ -113,7 +113,7 @@ of them is a silent wrong answer rather than a build error.
 
 ## The matrix is written out, not generated
 
-`ROMTAB` exists only for Mbed-TLS, `FEWER` only for the two libraries
+`ROMTAB` exists only for Mbed-TLS, `FEWER` only for libraries
 that have it, `LAYOUT` only for the in-tree reference cipher. A generated
 cross product would build meaningless combinations and report them as
 results. The list in [`../Makefile`](../Makefile) and in

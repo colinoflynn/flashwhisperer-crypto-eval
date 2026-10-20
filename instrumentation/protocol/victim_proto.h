@@ -86,6 +86,7 @@
 #define SS_LIB_MBEDTLS       2u
 #define SS_LIB_WOLFSSL       3u
 #define SS_LIB_STCRYPT       4u   /* ST STM32 Cryptographic Library, binary  */
+#define SS_LIB_LIBTOMCRYPT   5u
 
 /* The table residence twin: same code, same instruction stream, same
  * indices, tables relocated to RAM by the LINKER. The mandatory control. */
@@ -95,7 +96,7 @@
  * flash read path never sees them and the build should be quiet. */
 #define SS_LC_ROMTAB         0x02u
 /* The reduced-table option: Mbed-TLS MBEDTLS_AES_FEWER_TABLES, wolfSSL
- * WOLFSSL_AES_SMALL_TABLES. Both default off. */
+ * WOLFSSL_AES_SMALL_TABLES, LibTomCrypt LTC_SMALL_CODE. All default off. */
 #define SS_LC_FEWER          0x04u
 /* ST ships two archives per core; this is the time-optimised one. */
 #define SS_LC_TIMEOPT        0x08u

@@ -1,0 +1,17 @@
+libtomcrypt-few0-ram0-vcp-b115200-tsystick-w1-pad0-acr705.npz: default flash; n=50000, mean=2241.79, word-row shift=2, offset=0, pairs=24
+    2500 traces:  2/16 verified=False brute=0
+    5000 traces:  9/16 verified=False brute=0
+   10000 traces: 16/16 verified=True brute=0
+   25000 traces: 16/16 verified=True brute=0
+   50000 traces: 16/16 verified=True brute=0
+libtomcrypt-few0-ram1-vcp-b115200-tsystick-w1-pad0-acr705.npz: default RAM control; n=25000, mean=1319.00, word-row shift=2, offset=0, pairs=24
+    2500 traces:  0/16 verified=False brute=0
+    5000 traces:  0/16 verified=False brute=0
+   10000 traces:  0/16 verified=False brute=0
+   25000 traces:  0/16 verified=False brute=0
+libtomcrypt-few1-ram0-vcp-b115200-tsystick-w1-pad0-acr705.npz: small flash; n=50000, mean=2015.08, word-row shift=2, offset=0, pairs=120
+    2500 traces:  0/16 verified=False brute=0
+    5000 traces:  1/16 verified=False brute=0
+   10000 traces:  7/16 verified=False brute=0
+   25000 traces: 16/16 verified=True brute=0
+   50000 traces: 16/16 verified=True brute=0

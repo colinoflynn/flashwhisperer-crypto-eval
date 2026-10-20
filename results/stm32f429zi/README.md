@@ -96,10 +96,44 @@ which runs once per received byte and is outside every measured region.
 a dead counter and a constant-time cipher are identical in every summary
 statistic, and nothing encrypts a block in zero cycles.
 
+## LibTomCrypt on the same board
+
+The pinned upstream commit is `6c6d5104de66f3ca0dfd7b68540ef86869982b07`.
+These are new captures from this repository's harness, not numbers imported
+from the earlier research image. All three builds used the NUCLEO-F429ZI at
+16 MHz, DWT CYCCNT, warm-up enabled, and `FLASH_ACR=0x705` (read back by the
+device). Every ciphertext was checked against reference AES-128. The capture
+files are local and ignored by Git, as described in `results/README.md`.
+
+| LibTomCrypt build | Mean cycles | SD | Traces | Recovery at 2.5k / 5k / 10k / 25k |
+|---|---:|---:|---:|---|
+| Default 4T + four final `Te4_*` tables, flash | 2241.788 | 9.6627 | 50,000 | 2/16, 9/16, **16/16 verified**, 16/16 |
+| `LTC_SMALL_CODE`: one `TE0` + one `Te4`, flash | 2015.084 | 19.4021 | 50,000 | 0/16, 1/16, 7/16, **16/16 verified** |
+| Default tables moved to RAM | 1319.000 | 0.0569 | 25,000 | 0/16, 0/16, 0/16, 0/16 |
+
+The default and compact flash builds also verify at 50,000 traces. No
+brute-force candidates were used. The scorer uses 24 same-byte-lane pairs
+for the default final round's four separate tables, and all 120 pairs for
+the compact build's shared final-round table. The F429 has a 16-byte flash
+read row, giving a two-bit *word-index* row shift and offset zero. The RAM
+control uses the default AES code at the identical `0x08003a8c` address;
+only its table residence changes (`0x08000400` to `0x20000000`).
+
+The exact ladder output is in [`libtomcrypt_attack.log`](libtomcrypt_attack.log).
+Reproduce it with `python tools/attack_libtomcrypt.py
+results/stm32f429zi/libtomcrypt*.npz`. The three local capture SHA-256s,
+in default-flash, default-RAM, compact-flash order, are:
+
+```
+E8D8D1F96BC35915374FAF85DA948888702E19F3BD8092AEBC3765413DB52A80
+B70CE026861AEB5FF2E450CFF9D5E893FF056C4833012E1CEDBB52B08DA27CC0
+0BE0628937EC35DA367BD9B4734EC2206E0F9BD5200AD85F2C80C3E5EB2F581C
+```
+
 ## What is not here
 
-* Only the reference cipher. Mbed-TLS and wolfSSL build for this part and
-  are in `make matrix`, but haven't been captured on it.
+* Mbed-TLS and wolfSSL build for this part and are in `make matrix`, but
+  haven't been captured on it.
 * Only one accelerator word scored. The `0x705` arm was captured and not
   laddered.
 * No off-chip arm, and no `DCEN=0` arm - turning the data cache off is one

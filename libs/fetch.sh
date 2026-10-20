@@ -42,6 +42,7 @@ sparse_for() {
     case "$1" in
       mbedtls) echo "library include" ;;
       wolfssl) echo "wolfcrypt/src wolfssl" ;;
+      libtomcrypt) echo "src/ciphers/aes src/headers" ;;
       *)       echo "" ;;
     esac
 }
@@ -128,6 +129,7 @@ while read -r name url pin version; do
     case "$name" in
       mbedtls) guard="MBEDTLS_AES_ROM_TABLES"; src="$dir/library/aes.c" ;;
       wolfssl) guard="WOLFSSL_AES_SMALL_TABLES"; src="$dir/wolfcrypt/src/aes.c" ;;
+      libtomcrypt) guard="LTC_SMALL_CODE"; src="$dir/src/ciphers/aes/aes_tab.c" ;;
       *) guard=""; src="" ;;
     esac
     if [ -n "$guard" ] && [ -f "$src" ] && ! grep -q "$guard" "$src"; then

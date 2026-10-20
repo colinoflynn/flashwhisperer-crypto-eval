@@ -18,8 +18,9 @@ reason for each are in [`PINS`](PINS).
 There's no `patches/` directory and nothing to apply. Every configuration
 this repository builds is reached through the library's own documented
 mechanism - Mbed-TLS's `MBEDTLS_CONFIG_FILE`, wolfSSL's
-`WOLFSSL_USER_SETTINGS` - or through the linker, which moves tables
-without touching code. The per-library configuration headers live in
+`WOLFSSL_USER_SETTINGS`, LibTomCrypt's `LTC_SMALL_CODE` compile-time option -
+or through the linker, which moves tables without touching code. The
+per-library configuration headers live in
 `eval/lib/<name>/`, which is ours; the submodule is theirs.
 
 That claim is what makes a result hard to argue with, so it's checked
@@ -48,6 +49,15 @@ It warns too if the one upstream file an axis depends on has stopped
 mentioning the macro that axis sets - `MBEDTLS_AES_ROM_TABLES`,
 `WOLFSSL_AES_SMALL_TABLES`. An inert axis produces a null for the wrong
 reason, and a null is exactly what a working countermeasure looks like.
+
+LibTomCrypt is pinned to `6c6d5104de66f3ca0dfd7b68540ef86869982b07`,
+the exact upstream develop snapshot used in the F429 research capture. It has
+no release version string to assert, so the fetch verifies the AES source's
+`LTC_SMALL_CODE` guard and `tools/verify.sh` checks the exact commit and clean
+checkout. The default build retains four 1 KB forward T-tables and four
+1 KB final-round `Te4_*` tables; `FEWER=1` selects upstream's one-`TE0`,
+one-`Te4` word-table form. Both are `static const`, and the `RAMTAB=1`
+control moves their input sections without editing upstream source.
 
 ## What a submodule cannot cover
 

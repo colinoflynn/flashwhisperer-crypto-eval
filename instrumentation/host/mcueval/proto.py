@@ -47,12 +47,14 @@ LIB_REFSBOX = 1
 LIB_MBEDTLS = 2
 LIB_WOLFSSL = 3
 LIB_STCRYPT = 4
+LIB_LIBTOMCRYPT = 5
 
 LIB_NAMES = {
     LIB_REFSBOX: "refsbox",
     LIB_MBEDTLS: "mbedtls",
     LIB_WOLFSSL: "wolfssl",
     LIB_STCRYPT: "stcrypt",
+    LIB_LIBTOMCRYPT: "libtomcrypt",
 }
 
 # SS_LC_* - the configuration bitmap

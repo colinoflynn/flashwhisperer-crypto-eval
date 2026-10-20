@@ -39,6 +39,12 @@ SECTIONS
 {
   .isr_vector : { KEEP(*(.isr_vector)) } > FLASH
 
+  /* Give both residency arms the same 1 KB-aligned flash load address.
+     Align TABS separately because some RAM regions (and K21's preceding
+     .ramfunc) do not end on a 1 KB boundary. Neither pad contains tables. */
+  .tab_flash_align : { . = ALIGN(1024); } > FLASH
+  .tab_vma_align (NOLOAD) : { . = ALIGN(1024); } > TABS
+
   .aestab :
   {
     . = ALIGN(1024);
@@ -66,7 +72,14 @@ SECTIONS
 
     _tabend = .;
   } > TABS AT > FLASH
-  _tabload = LOADADDR(.aestab);
+  /* The load address of _tabstart, NOT of the section. ALIGN(1024) is
+     inside .aestab, so a future unaligned TABS origin could put padding
+     before the first table byte. Before the pre-alignment sections above,
+     LOADADDR(.aestab) copied the wrong bytes on xmc1100, aducm3029 and
+     k21fn1m0; the RAM twin came up holding padding. This expression also
+     makes the flash-arm load and run addresses equal, so startup does not
+     try to copy flash bytes over its executing code. */
+  _tabload = LOADADDR(.aestab) + (_tabstart - ADDR(.aestab));
 
   .text :
   {
