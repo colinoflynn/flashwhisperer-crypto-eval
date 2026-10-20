@@ -1,0 +1,33 @@
+# THERE IS NO PYOCD TARGET FOR THIS PART, AND NO PYOCD PATH TO THIS BOARD.
+#
+# This file is comments on purpose. tools/capture.py reads it whole and
+# would hand the text to pyocd as a target name, so a caller that tries to
+# flash this part gets a loud failure instead of a capture filed under a
+# part that was never programmed.
+#
+# Two separate reasons, and fixing either one alone changes nothing.
+#
+# 1. No target definition exists. `python -m pyocd list --targets` has no
+#    CC13xx or CC26xx entry (checked 2026-10-14: the only Texas
+#    Instruments built-in is cc3220sf), and `python -m pyocd pack find
+#    cc1352` matches nothing in the pack index, so there is no CMSIS pack
+#    to install either.
+#
+# 2. The probe is an XDS110 and the board wires only 2-pin cJTAG. TDI and
+#    TDO are not routed on a LAUNCHXL-CC1352R1, so CMSIS-DAP SWD and
+#    4-pin JTAG were both tried on this bench and both read a scan chain
+#    of all zeroes. pyocd does not speak cJTAG, so even with a target
+#    definition it could not reach this die.
+#
+# WHAT ACTUALLY PROGRAMS THIS PART, on the bench where it was measured:
+# TI's DSLite from UniFlash, which speaks cJTAG through the ICEpick, with
+# a .ccxml naming the XDS110 and the device. The research tree wraps it in
+# results/cc1352/cc13.py, and two details there are not optional - the
+# erase setting must be "necessary sectors only" so the CCFG sector
+# survives, and DSLite leaves the core parked in the boot ROM after
+# programming, so the image only starts after a separate DSS reset+run.
+#
+# WHAT IT WOULD TAKE to flash this part from this tree: a flash step that
+# is not pyocd. tools/capture.py would need a per-part programmer hook
+# rather than a per-part target name, which is a change outside
+# mcufw/<part>/ and has deliberately not been made for an untested port.

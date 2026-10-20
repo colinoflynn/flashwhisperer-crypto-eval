@@ -1,0 +1,16 @@
+# THERE IS NO PYOCD TARGET FOR THIS PART, so this file holds no name.
+#
+# `python -m pyocd list --targets` on this machine matches none of s5d3,
+# synergy or r7fs, and lists no Renesas vendor row at all, RA family
+# included. There is nothing to install either, since a pack has to exist to
+# be fetched.
+#
+# The board is also on a Renesas J-Link on this bench, which pyocd does not
+# drive, so even a target name would not make `tools/capture.py` work here.
+# Flashing and the SWD mailbox both go through J-Link tooling instead, and no
+# host side for that exists in this tree.
+#
+# tools/capture.py reads this file whole and strips it, so it will hand pyocd
+# these comment lines as a target name and pyocd will reject them. That is the
+# intended failure: loud and in the right place, rather than a plausible name
+# that resolves to the wrong die.

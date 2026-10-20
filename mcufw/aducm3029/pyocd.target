@@ -1,0 +1,8 @@
+NO-PYOCD-TARGET-FOR-ADUCM3029. `python -m pyocd list --targets` lists 1672
+targets and not one of them matches "aducm", "adi" or "analog", so there is
+no name to put here and none to `pyocd pack install` either. The
+EVAL-ADICUP3029 carries a DAPLink that programs a .hex by drag and drop,
+which is how rigs/fw_aducm_aes/ flashes it. tools/capture.py reads this
+whole file as the target name, so it will hand this text to pyocd and pyocd
+will refuse it. That is the intended loud failure: this port is untested on
+silicon and nothing should flash from it silently.

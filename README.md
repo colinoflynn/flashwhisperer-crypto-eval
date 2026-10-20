@@ -259,7 +259,7 @@ the first trace count at which the exact master key falls out.
 
 | | |
 |---|---|
-| parts | six, all measuring: STM32L152RE (M3, no cache), STM32F401RE and STM32F429ZI (M4, ART), STM32G474RE (M4, 8-byte reads), STM32H723ZG (M7, L1 only) and STM32F746ZG (M7, ART *and* L1) |
+| parts | `make list` prints them one line each, and it is the only place that counts them. Two groups, and the difference is the important part: the ones MEASURED on silicon from this tree - STM32L152RE, STM32F401RE, STM32F429ZI, STM32G474RE, STM32H723ZG, STM32F746ZG - and a larger set that builds its whole matrix and has never been on a board, each of whose `board.c` says so in its opening paragraph. A port that builds is not a port that measures |
 | libraries | the in-tree reference cipher, Mbed-TLS 3.6.7, wolfSSL 5.9.4 |
 | instruments | on-chip (the victim's own counter). The off-chip instrument is NOT moved over yet. |
 

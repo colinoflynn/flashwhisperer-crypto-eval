@@ -1,0 +1,18 @@
+# NO PYOCD TARGET FOR THIS PART. This file is deliberately all comments, so
+# that anything reading it for a target name gets nothing rather than a name
+# that would resolve to the wrong device.
+#
+# Two separate reasons, and the second one survives the first being fixed:
+#
+#   `python -m pyocd list --targets` on this machine lists 1672 targets and
+#   not one of them is Renesas: no r7fa, no ra2, no vendor row. There is no
+#   CMSIS pack installed that would cover it either, so `pyocd pack install`
+#   has nothing to name.
+#
+#   The board this part sits on is driven by a Renesas J-Link, which pyocd
+#   does not speak to at all. Even with a target definition, tools/capture.py's
+#   pyocd path would not reach it.
+#
+# The rig that measured this part flashes it with J-Link instead
+# (rigs/fw_ra2_aes/flash.jlink in the flash-accelerator-tests tree). Wiring
+# that up is a change to tools/capture.py, which is outside this port.

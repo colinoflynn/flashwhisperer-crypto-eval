@@ -1,0 +1,16 @@
+THERE-IS-NO-PYOCD-TARGET-FOR-THIS-PART
+# `python -m pyocd list --targets | grep -i xmc` matches nothing in pyocd
+# 0.45.1, the version installed here, and nothing in its built-in table
+# starts with xmc. `pyocd pack install` cannot help either, because that
+# fetches a support pack for a target name that already resolves.
+#
+# So tools/capture.py cannot flash or reset this part. The line above is a
+# sentinel rather than a name: pyocd will reject it and say so, which is
+# the intended failure - better than an empty file that reads as "not
+# filled in yet" or a plausible-looking name that resolves to some other
+# die.
+#
+# The research tree hit the same wall and programs this part through
+# J-Link with pylink instead, recording that in its board registry rather
+# than leaving the next session to rediscover it. Doing the same here
+# means a J-Link path in tools/, which this port did not add.

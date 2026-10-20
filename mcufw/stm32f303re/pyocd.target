@@ -1,0 +1,23 @@
+# NO PYOCD TARGET FOR THIS PART on this host, so this file is comments
+# and tools/capture.py will fail loudly rather than flash the wrong
+# thing. It reads the file with .read_text().strip() and passes the
+# result to pyocd as a target name, so what comes out of here is this
+# text and pyocd rejects it.
+#
+# Checked, 2026-10-14, pyocd 0.45.1:
+#
+#   python -m pyocd list --targets 2>&1 | grep -i f303
+#
+# returns nothing, while the same listing holds over 1400 other STM32
+# targets. No pack was installed to try to change that.
+#
+# The research tree's rig for this part records the same thing and says
+# how it flashes instead: rigs/fw_f303_aes/Makefile notes that pyocd
+# 0.45.1 has no stm32f303 target and no pack for one, that the generic
+# cortex_m target is enough for halted register reads but cannot program
+# the part, and that fw.bin is copied onto the ST-LINK mass-storage
+# volume labelled NOD_F303RE - resolved BY LABEL, never by drive letter,
+# which moved once already.
+#
+# If a pack does turn up, replace this whole file with the target name on
+# one line and nothing else.
