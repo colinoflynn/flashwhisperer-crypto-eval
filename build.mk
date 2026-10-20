@@ -3,6 +3,8 @@
 #
 #   make MCU=stm32l152re LIB=refsbox
 #   make MCU=stm32l152re LIB=mbedtls ROMTAB=1 RAMTAB=1
+#   make MCU=atsamd21j18a LIB=refsbox CLK=8        # the 8 MHz build point
+#   make MCU=stm32l152re LIB=refsbox EXTRA_DEFS=-DSS_FOO=1   # a one-off
 #
 # WHY THE VARIANT STRING IS SO LONG, AND WHY EACH VARIANT GETS ITS OWN
 # OBJECT DIRECTORY. Several of these axes change the LINK-TIME LAYOUT, and
@@ -53,6 +55,21 @@ WARMUP  ?= 1
 CODEPAD ?= 0
 BAUD    ?= 115200
 FALIGN  ?= 4
+# The core clock in MHz, where the part has a choice. NO DEFAULT HERE
+# EITHER, and for the same reason as LINK: the legal clocks are a part
+# property and only the board file knows them, so an empty CLK means "the
+# clock the board file defaults to" and a number means "this one, and
+# #error if the board file cannot reach it".
+#
+# THE CLOCK IS AN AXIS BECAUSE A CELL ONLY EXISTS AT ONE VALUE OF IT. The
+# SAM D21 leaks at ZERO wait states under READMODE = LOW_POWER, and RWS 0
+# is only legal on that part at or below 24 MHz, so that cell exists at
+# CLK=8 and nowhere else; at 48 MHz the board correctly refuses the word
+# and the sweep records a configuration that did not take.
+CLK     ?=
+# Anything else to put on the compile line: the escape hatch for a one-off
+# that does not deserve an axis of its own.
+EXTRA_DEFS ?=
 
 include $(MCUDIR)/board.mk
 include $(LIBDIR)/lib.mk
@@ -96,7 +113,52 @@ endif
 
 COMMON_DEFS += -DSS_BAUD=$(BAUD)u -DSS_WARMUP=$(WARMUP) -DSS_RAMTAB=$(RAMTAB)
 
-VARIANT = $(LIB)$(LIB_VARIANT)-ram$(RAMTAB)-$(LINK)-b$(BAUD)-t$(TIMING)-w$(WARMUP)-pad$(CODEPAD)
+# ---- the clock, and the escape hatch -------------------------------------
+# BOTH OF THESE REACH THE COMPILER AND BOTH ARE THEREFORE IN VARIANT. An
+# axis that changes the image without changing the variant string is worse
+# than no axis at all: the two builds then share one object directory AND
+# one capture name, so the second silently overwrites the first and the
+# capture on disk is filed under the configuration it is not. That is what
+# the long comment at the top of this file is about, and it is why the hook
+# below and the name component beside it are one change and not two.
+#
+# A board file that cannot reach the clock asked for says so with an
+# #error. It must not fall back to its default: a build that quietly runs
+# at 48 MHz while the sweep is filed as 8 MHz is a whole round of results.
+ifneq ($(strip $(CLK)),)
+  COMMON_DEFS += -DSS_CLK_MHZ=$(strip $(CLK))
+  CLK_VARIANT := -clk$(strip $(CLK))
+else
+  CLK_VARIANT :=
+endif
+
+# EXTRA_DEFS IS NARROWER THAN IT LOOKS, ON PURPOSE. The clock has its own
+# axis above, and is refused here, because a generic hook cannot name what
+# it has never seen: -DSS_CLK_MHZ=8 passed through EXTRA_DEFS would land in
+# the variant string as an opaque digest instead of as `-clk8`, which is
+# the readable half of what makes a capture attributable.
+ifneq ($(findstring SS_CLK_MHZ,$(EXTRA_DEFS)),)
+  $(error pass the clock as CLK=8, not inside EXTRA_DEFS - CLK is named in \
+the variant string and spells the collision out, EXTRA_DEFS only digests it)
+endif
+# A digest rather than the text: EXTRA_DEFS can hold anything, including
+# characters that are not legal in a directory name, and silently dropping
+# those is how two different builds get one name. Non-empty EXTRA_DEFS
+# therefore always moves the build somewhere new, whatever is in it.
+ifneq ($(strip $(EXTRA_DEFS)),)
+  EXTRA_VARIANT := -x$(shell printf '%s' "$(strip $(EXTRA_DEFS))" | md5sum | cut -c1-8)
+else
+  EXTRA_VARIANT :=
+endif
+
+# $(BOARD_VARIANT) gives a PART the same right to name its own axis that a
+# library already has with $(LIB_VARIANT). Only the RP2040 sets it, where
+# which boot2 is linked IS the flash read configuration - the clock
+# divider, the dummy cycles and the sample delay are programmed by the
+# loader and are not a register - and the research tree measured 2.77x
+# between the two shipped there. Unset everywhere else, so no other part's
+# variant string moves.
+VARIANT = $(LIB)$(LIB_VARIANT)$(BOARD_VARIANT)-ram$(RAMTAB)-$(LINK)-b$(BAUD)$(CLK_VARIANT)-t$(TIMING)-w$(WARMUP)-pad$(CODEPAD)$(EXTRA_VARIANT)
 BUILD   = $(ROOT)/build/$(MCU)/$(VARIANT)
 TARGET  = $(BUILD)/fw
 
@@ -111,7 +173,7 @@ CFLAGS  = $(BOARD_CPU) -O2 -g -ffreestanding -fno-common \
           -fdata-sections -ffunction-sections -falign-functions=$(FALIGN) \
           -Wall -Wextra \
           -I$(VICTIM)/include -I$(PROTO) $(BOARD_INC) $(LIB_INC) \
-          $(COMMON_DEFS) $(LIB_DEFS) -MMD -MP
+          $(COMMON_DEFS) $(LIB_DEFS) $(EXTRA_DEFS) -MMD -MP
 
 # -L gives `INCLUDE` its search path, which is how the three linker fragments
 # find each other: the part's memory map, the shared sections block, and the

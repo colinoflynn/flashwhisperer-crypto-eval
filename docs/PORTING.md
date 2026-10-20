@@ -52,6 +52,17 @@ passed, and from the host it looked like an unrelated crash.
 `SS_V_SET_ACR` replies with the readback, never the requested value, so a
 caller learns it was refused by getting the old value back. Keep that.
 
+A refused word is sometimes a cell that only exists at another clock: zero
+wait states is legal on the SAM D21 at or below 24 MHz and nowhere near
+48, and under `READMODE = LOW_POWER` that is where the part leaks. So give
+the clock a `#ifndef SS_CLK_MHZ` default in `board.c`, derive everything
+from it, and `#error` on a value the part cannot reach rather than falling
+back to the default. `make CLK=8` then passes `-DSS_CLK_MHZ=8` and the
+clock lands in the build directory name as `-clk8`, so two clocks are two
+builds and two captures instead of one of each. Do not read the clock out
+of a make variable the board file never sees - a board file and a build
+file disagreeing about the clock produces numbers rather than an error.
+
 ### On a part with caches, "set the accelerator" is a dance
 
 Leaving the accelerator in the state a reset-time write would leave it
@@ -112,7 +123,9 @@ counter to make the arm "work".
 
 ## What goes in `board.mk`
 
-Five variables and nothing else:
+These variables and nothing else. The required ones first, then
+`BOARD_VARIANT`, which is for the part that has an axis of its own and
+which most parts leave unset:
 
 | | |
 |---|---|
@@ -122,10 +135,21 @@ Five variables and nothing else:
 | `BOARD_INC` | its include directory |
 | `BOARD_LINKS` | which physical links the victim can speak on |
 | `BOARD_ACR_WORDS` | accelerator words worth sweeping |
+| `BOARD_VARIANT` | optional: a name component for an axis only this part has |
 
 `BOARD_LINKS` is checked: asking for a link a part doesn't offer is a make
 error naming the ones it does, rather than a build that comes out wired to
 nothing.
+
+`BOARD_VARIANT` is the part's half of the build directory name, the way
+`LIB_VARIANT` is the library's. Set it when the part has a configuration
+axis of its own that changes the image, and set it whenever it does: a
+directory name that doesn't carry the axis means two images share one
+directory and one capture name, and the second overwrites the first hours
+after anyone could have noticed. The RP2040 is the part here that needs
+it, because on a part with no latency register which boot2 is linked *is*
+the flash read configuration, so it sets `BOARD_VARIANT = -b2$(BOOT2)`. A
+part that leaves it unset gets exactly the variant string it had before.
 
 And one file beside it: `mcufw/<part>/pyocd.target`, holding the pyocd
 target name on one line. `tools/capture.py` reads it so that flashing a
