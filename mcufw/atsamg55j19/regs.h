@@ -136,9 +136,28 @@
 /* ---- PMC, read only in this port --------------------------------------- */
 #define PMC_BASE_REG      0x400E0400u
 #define PMC_PCER0         SS_REG32(PMC_BASE_REG + 0x10u)
+#define PMC_PCSR0         SS_REG32(PMC_BASE_REG + 0x18u)
+/* The PMC's write protect. MEASURED SET on this board: WPMR read 0x00000001
+ * out of reset, which makes every PMC_PCER0 write a no-op and leaves PCSR0 at
+ * zero, so no peripheral ever gets a clock. Writing the key with WPEN clear
+ * unlocks it; the key is the ASCII "PMC" in bits 8..31. Reads of PCSR0 are the
+ * only honest confirmation that a clock enable actually took. */
+#define PMC_WPMR          SS_REG32(PMC_BASE_REG + 0xE4u)
+#define PMC_WPMR_UNLOCK   0x504D4300u      /* "PMC" << 8, WPEN = 0 */
 #define CKGR_MOR          SS_REG32(PMC_BASE_REG + 0x20u)
 #define PMC_MCKR          SS_REG32(PMC_BASE_REG + 0x30u)
 #define PMC_SR            SS_REG32(PMC_BASE_REG + 0x68u)
+
+/* CKGR_MOR needs its key in bits 16..23 or the write is dropped silently,
+ * which is the same failure mode as the PMC write protect above. MOSCRCF
+ * selects the fast RC frequency: 0 = 8 MHz, 1 = 16 MHz, 2 = 24 MHz. This
+ * board was MEASURED sitting at MOSCRCF = 2 while the build was told 8, so
+ * the frequency is set rather than assumed -- see clock_init. */
+#define CKGR_MOR_KEY      (0x37u << 16)
+#define CKGR_MOR_MOSCRCEN (1u << 3)
+#define CKGR_MOR_MOSCRCF_Pos 4u
+#define CKGR_MOR_MOSCRCF_Msk (0x7u << 4)
+#define PMC_SR_MOSCRCS    (1u << 17)
 
 /* Peripheral identifiers, which are also the PMC_PCER0 bit numbers for
  * everything below 32. From samg55j19.h; the rig's vector table carries the

@@ -243,12 +243,56 @@ void ssb_monitors_read(uint32_t *hit, uint32_t *miss)
 }
 
 /* ---- clock -------------------------------------------------------------- */
+/* Drive the fast RC to `mhz` (8, 16 or 24), one MOSCRCF step at a time.
+ *
+ * Writes to CKGR_MOR without the key in bits 16..23 are discarded in silence,
+ * so the key goes on every write here. The settle wait is on PMC_SR.MOSCRCS
+ * rather than a delay loop, because a delay loop calibrated at one frequency
+ * is wrong at the others by construction. */
+static void rc_set(uint32_t mhz)
+{
+    uint32_t want = (mhz >= 24u) ? 2u : (mhz >= 16u) ? 1u : 0u;
+    uint32_t now  = (CKGR_MOR & CKGR_MOR_MOSCRCF_Msk) >> CKGR_MOR_MOSCRCF_Pos;
+
+    while (now != want) {
+        now = (now < want) ? (now + 1u) : (now - 1u);
+        CKGR_MOR = CKGR_MOR_KEY | CKGR_MOR_MOSCRCEN
+                 | (now << CKGR_MOR_MOSCRCF_Pos);
+        while ((PMC_SR & PMC_SR_MOSCRCS) == 0u) { }
+    }
+}
+
 static void clock_init(void)
 {
-    /* Nothing to switch: the part is already on the fast RC at its reset
-     * selection and MCKR.PRES is 0. The accelerator is set through the same
-     * path the host will use, so the boot state and a host-set state are
-     * produced by identical code. */
+    /* UNLOCK THE PMC FIRST, before anything tries to enable a peripheral
+     * clock. This board comes up with PMC_WPMR.WPEN set -- measured, not
+     * assumed -- and while it is set a write to PMC_PCER0 is discarded
+     * without any error. The symptom is not a dead part but a half-live one:
+     * FLEXCOM_MR and US_MR keep their written values because they sit in a
+     * domain that does not need the peripheral clock, while US_BRGR stays 0
+     * and the USART never transmits or receives. PCSR0 is the register that
+     * tells the truth, so check it rather than PCER0, which is write-only. */
+    PMC_WPMR = PMC_WPMR_UNLOCK;
+
+    /* SET the fast RC to the frequency this build was compiled for, rather
+     * than trusting the reset selection. MEASURED on silicon: this board came
+     * up with MOSCRCF = 2, so MCK was 24 MHz while SS_CLK_MHZ said 8. Two
+     * things break on that and neither announces itself:
+     *
+     *   - the baud divider is derived from SS_CLK_HZ, so CD=4/FP=3 produced
+     *     342 857 baud instead of 114 286 and the host read garbage;
+     *   - min_fws() is derived from SS_CLK_HZ too, so at 24 MHz the legal
+     *     floor is FWS 1 and acr_legal() would REFUSE the FWS 0 word that
+     *     this part's open cell is entirely about. ssb_acr_set() refuses by
+     *     returning without writing, so the capture would have measured the
+     *     previous word under the new word's label.
+     *
+     * MOSCRCF is stepped one notch at a time, as the datasheet sequences it,
+     * waiting for PMC_SR.MOSCRCS to say the RC has settled at each step. */
+    rc_set(SS_CLK_MHZ);
+
+    /* The accelerator is set through the same path the host will use, so the
+     * boot state and a host-set state are produced by identical code. */
     ssb_acr_set(SSB_ACR_RESET);
 }
 
