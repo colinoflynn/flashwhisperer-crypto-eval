@@ -48,15 +48,22 @@
  *     _tabstart at 0x20000400, so the low address bits the row arithmetic
  *     is written against are identical to the flash arm's.
  *   - It is below _estack and leaves the ASSERT in sections.ld its 4 KB of
- *     stack headroom with the whole table set resident, which on 16 KB of
- *     SRAM is the thing most likely to fail. Measured on the built image
- *     rather than estimated: refsbox LAYOUT=sbox RAMTAB=1 puts the tables
- *     at 0x20000400..0x200014FF (4 352 bytes - the four 1 KB T-tables are
+ *     stack headroom FOR A LIBRARY WHOSE TABLES FIT, which on 16 KB of SRAM
+ *     is the thing most likely to fail. Measured on the built image rather
+ *     than estimated: refsbox LAYOUT=sbox RAMTAB=1 puts the tables at
+ *     0x20000400..0x200014FF (4 352 bytes - the four 1 KB T-tables are
  *     linked in whatever the layout, plus the 256-byte S-box), then .data
  *     and .bss to 0x200026C8, leaving 6 456 bytes of stack below _estack
  *     at 0x20004000. RAMTAB=0 ends at 0x200012C8 and leaves 11 576. The
  *     768 bytes between ORIGIN and the aligned table start are the cost of
  *     reserving the vector region, and the part has them to spare.
+ *
+ *     THIS WAS WRITTEN AS "with the whole table set resident" AND THAT WAS
+ *     WRONG - it generalised a refsbox measurement to every library. The
+ *     bound is LibTomCrypt's default configuration: twelve 1 KB tables that
+ *     survive garbage collection, leaving 2 560 bytes where the assertion
+ *     wants 4 096. board.mk declares that cell in BOARD_NO_CELLS. What this
+ *     region holds is a twin of up to about 8 KB of tables, not any twin.
  *
  * What is NOT established: whether the boot ROM or the SSW uses any SRAM
  * above 0xBF while user code runs. The rig reserves 0xC0 and nothing more,

@@ -75,6 +75,25 @@ include $(MCUDIR)/board.mk
 include $(LIBDIR)/lib.mk
 -include $(EVALDIR)/eval.mk
 
+# ---- cells a part cannot host --------------------------------------------
+# $(CELL) names a library configuration and its table residence, which is
+# the granularity at which a part either can or cannot hold the build: the
+# RAM twin of a library with 12 KB of tables does not fit in 16 KB of SRAM,
+# and no other axis changes that.
+#
+# A part declares the ones it cannot host in BOARD_NO_CELLS, with the
+# measured numbers beside it, and this REFUSES THEM RATHER THAN LETTING
+# `ld` overflow the region. The same reason CLK exists: a cell that does
+# not exist on a part should say so in the terms the sweep was asked in,
+# not as a byte count against a region name. An `ld` overflow also reads
+# like a part that is out of memory, when what it means is that one line of
+# `make matrix` has no twin here.
+CELL = $(LIB)$(LIB_VARIANT)-ram$(RAMTAB)
+
+ifneq ($(filter $(CELL),$(BOARD_NO_CELLS)),)
+  $(error $(MCU) cannot host the cell $(CELL): it is listed in BOARD_NO_CELLS in mcufw/$(MCU)/board.mk, which records what it measured and why. `make matrix MCU=$(MCU)` builds the twin this part can hold instead of this one)
+endif
+
 # ---- link ----------------------------------------------------------------
 # The part's first declared link, unless the caller named one.
 ifeq ($(strip $(LINK)),)
@@ -199,10 +218,24 @@ all: $(TARGET).bin
 variant:
 	@echo $(VARIANT)
 
-$(BUILD)/%.o: %.c | $(BUILD)
+# THE MAKEFILES ARE PREREQUISITES, NOT JUST THE SOURCES. -MMD tracks the
+# headers a .c pulled in and nothing else, so a define added to lib.mk or
+# board.mk did not rebuild anything: the next `make one` relinked stale
+# objects and reported a build that the current configuration does not
+# describe. That is the worst shape this repository has for a failure,
+# because the variant directory and the device's self-report both still say
+# the right thing - two builds that are secretly one. Found by adding a
+# define to lib.mk, measuring no change in .bss, and not believing it.
+MAKEFILES_DEP = $(ROOT)/build.mk $(MCUDIR)/board.mk $(LIBDIR)/lib.mk                 $(wildcard $(EVALDIR)/eval.mk)
+
+$(BUILD)/%.o: %.c $(MAKEFILES_DEP) | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(TARGET).elf: $(OBJ) | $(BUILD)
+# Same argument for the link: the three linker fragments decide the layout,
+# and the layout is half of what is being measured.
+LDSCRIPTS_DEP = $(VICTIM)/ld/sections.ld $(VICTIM)/ld/$(LDSCRIPT)                 $(MCUDIR)/memory.ld $(wildcard $(LIBDIR)/tab_*.ld)
+
+$(TARGET).elf: $(OBJ) $(LDSCRIPTS_DEP) | $(BUILD)
 	$(CC) $(LDFLAGS) $(OBJ) $(LIB_ARCHIVE) -o $@
 	@$(CROSS)size $@
 

@@ -26,10 +26,17 @@
  * WHY 16K AND NOT MORE. The datasheet's SRAM-mode-0 map and ADI's linker
  * script each describe a larger contiguous region and they do NOT agree
  * with each other about it. 16 KB for bank 0 is the figure both do agree
- * on, so this stays inside the intersection. The victim fits with room to
- * spare even with the table twin resident in RAM: see the build sizes in
- * the port's report, and sections.ld's own 4 KB stack-headroom assertion is
- * what enforces it at link time.
+ * on, so this stays inside the intersection.
+ *
+ * WHAT 16 KB DOES AND DOES NOT LEAVE ROOM FOR. The reference victim fits
+ * with room to spare with its table twin resident in RAM: refsbox is 4 KB
+ * of tables and links with over 11 KB of stack headroom. LibTomCrypt's
+ * DEFAULT twin does not fit at all - twelve 1 KB tables leave 2 560 bytes
+ * where sections.ld asserts 4 096 - and board.mk declares that cell in
+ * BOARD_NO_CELLS with the measured numbers. So the assertion in sections.ld
+ * is what decides this at link time, and 16 KB is not room to spare for
+ * every library: it is room to spare for the ones with up to about 8 KB of
+ * tables.
  */
 ENTRY(Reset_Handler)
 
