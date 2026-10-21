@@ -14,19 +14,22 @@ encrypt.
 
 ```bash
 git submodule update --init          # flashwhisperer, the analysis half
-./libs/fetch.sh                      # the pinned library checkouts
+./libs/fetch.sh                      # the pinned library checkouts (target libraries)
 make list                            # what parts and libraries there are
-make matrix MCU=stm32l152re          # every configuration worth having
+make matrix MCU=stm32l152re          # make a bunch of configs
 
 python tools/capture.py --mcu stm32l152re --probe <probe-serial> \
        --variant refsbox-sbox-ram0-vcp-b115200-tsystick-w1-pad0 -n 20000
 python tools/attack.py results/stm32l152re/*.npz --line-shifts 3,1
 ```
 
+*NOTE: This repo was 'extracted' from a larger research repo, so some commits may reference that, or have later timelines than the
+original repo.*
+
 ## Without a board
 
-A good half of this you can run with nothing attached, because the thing
-that decides whether there's a channel at all is settled at link time.
+You can build and look at the binaries without a board. Often you can
+check if the tables went into flash or not just with that (see example below).
 You need `arm-none-eabi-gcc` and the pinned checkouts, nothing else.
 
 ```bash
@@ -44,10 +47,9 @@ libraries:
   wolfssl        wolfSSL 5.9.4, axis FEWER; tables are in flash in EVERY build
 ```
 
-### Watch the control work
+### Mbed TLS RAM vs ROM Tables Example
 
-Three builds of the same library. Every build prints where its tables
-landed, which is the whole residence argument in one place:
+If you wanted to confirm tables in RAM vs ROM, we could use Mbed TLS:
 
 ```bash
 ./tools/build.sh MCU=stm32l152re LIB=mbedtls ROMTAB=1 RAMTAB=0   # flash arm
